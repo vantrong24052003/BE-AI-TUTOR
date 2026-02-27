@@ -17,9 +17,9 @@
 │ id (PK)     │       │ id (PK)     │       │ id (PK)     │
 │ email       │◀──┐   │ title       │◀──┐   │ course_id   │──▶ courses.id
 │ password    │   │   │ description │   │   │ title       │
-│ name        │   │   │ creator_id  │───┘   │ content     │
-│ avatar      │   │   │ thumbnail   │       │ order       │
-│ is_active   │   │   │ is_published│       │ video_url   │
+│ name        │   │   │ teacher_id  │───┘   │ content     │
+│ role        │   │   │ thumbnail   │       │ order       │
+│ avatar      │   │   │ is_published│       │ video_url   │
 │ created_at  │   │   │ created_at  │       │ duration    │
 └─────────────┘   │   └─────────────┘       └─────────────┘
                   │
@@ -92,6 +92,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     name VARCHAR(100) NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'student',
     avatar VARCHAR(500),
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -99,6 +100,7 @@ CREATE TABLE users (
 );
 
 CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_role ON users(role);
 ```
 
 | Column | Type | Mô tả |
@@ -107,12 +109,11 @@ CREATE INDEX idx_users_email ON users(email);
 | email | VARCHAR(255) | Email (unique) |
 | password | VARCHAR(255) | Password đã hash (bcrypt) |
 | name | VARCHAR(100) | Tên hiển thị |
+| role | VARCHAR(20) | Role: student, teacher, admin |
 | avatar | VARCHAR(500) | URL avatar |
 | is_active | BOOLEAN | Trạng thái active |
 | created_at | TIMESTAMP | Thời gian tạo |
 | updated_at | TIMESTAMP | Thời gian cập nhật |
-
-> **Lưu ý**: Không có cột `role` - tất cả users có quyền như nhau. Access control dựa trên ownership.
 
 ### 2. courses
 
@@ -121,7 +122,7 @@ CREATE TABLE courses (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    creator_id INTEGER REFERENCES users(id),
+    teacher_id INTEGER REFERENCES users(id),
     thumbnail VARCHAR(500),
     category VARCHAR(100),
     level VARCHAR(50) DEFAULT 'beginner',
@@ -131,7 +132,7 @@ CREATE TABLE courses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_courses_creator ON courses(creator_id);
+CREATE INDEX idx_courses_teacher ON courses(teacher_id);
 CREATE INDEX idx_courses_category ON courses(category);
 CREATE INDEX idx_courses_published ON courses(is_published);
 ```
@@ -141,7 +142,7 @@ CREATE INDEX idx_courses_published ON courses(is_published);
 | id | SERIAL | Primary key |
 | title | VARCHAR(255) | Tên khóa học |
 | description | TEXT | Mô tả chi tiết |
-| creator_id | INTEGER | FK → users.id (người tạo) |
+| teacher_id | INTEGER | FK → users.id |
 | thumbnail | VARCHAR(500) | URL hình ảnh |
 | category | VARCHAR(100) | Danh mục |
 | level | VARCHAR(50) | Level: beginner, intermediate, advanced |

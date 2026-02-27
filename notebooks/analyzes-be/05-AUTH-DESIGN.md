@@ -1,78 +1,47 @@
-# BE AI TUTOR - Authentication Design
+# BE AI TUTOR - Authentication & Authorization
 
-> Chi tiết về authentication trong hệ thống
+> Chi tiết về authentication và authorization trong hệ thống
 
 ---
 
-## 🔐 Authentication Overview
+## 🔐 Authentication
 
-### Single Role: User
-Hệ thống chỉ có **1 role duy nhất** là `user`. Mọi user đều có quyền như nhau.
+### JWT Token Structure
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     AUTHENTICATION MODEL                        │
+│                         JWT TOKEN                               │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  ❌ KHÔNG CÓ ROLE-BASED ACCESS                                  │
-│  └── Tất cả users có quyền như nhau                             │
+│  Header:                                                        │
+│  {                                                              │
+│    "alg": "HS256",                                              │
+│    "typ": "JWT"                                                 │
+│  }                                                              │
 │                                                                 │
-│  ✅ RESOURCE OWNERSHIP                                          │
-│  ├── User chỉ có thể sửa/xóa resource của mình                  │
-│  └── Ví dụ: chỉ sửa course mình tạo                             │
+│  Payload:                                                       │
+│  {                                                              │
+│    "sub": "user_id",                                            │
+│    "email": "user@example.com",                                 │
+│    "role": "student",                                           │
+│    "exp": 1709047200,                                           │
+│    "iat": 1709045400                                            │
+│  }                                                              │
 │                                                                 │
-│  ✅ AUTHENTICATION REQUIRED                                     │
-│  └── Cần đăng nhập để sử dụng hệ thống                          │
+│  Signature:                                                     │
+│  HMACSHA256(base64(header) + "." + base64(payload), secret)    │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
----
-
-## 🔑 JWT Token Structure
-
-### Header
-```json
-{
-  "alg": "HS256",
-  "typ": "JWT"
-}
-```
-
-### Payload
-```json
-{
-  "sub": 1,
-  "email": "user@example.com",
-  "exp": 1709047200,
-  "iat": 1709045400
-}
-```
-
-| Field | Type | Mô tả |
-|-------|------|-------|
-| sub | int | User ID |
-| email | string | Email |
-| exp | int | Expiration timestamp |
-| iat | int | Issued at timestamp |
-
-### Signature
-```
-HMACSHA256(base64(header) + "." + base64(payload), secret_key)
-```
-
----
-
-## 🎫 Token Types
+### Token Types
 
 | Token | Lifetime | Purpose |
 |-------|----------|---------|
 | Access Token | 30 minutes | API authentication |
 | Refresh Token | 7 days | Get new access token |
 
----
-
-## 🔄 Token Flow
+### Token Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -93,34 +62,7 @@ HMACSHA256(base64(header) + "." + base64(payload), secret_key)
                       └─────────┘
 ```
 
-### Login Flow
-```
-1. User gửi email + password
-2. Server validate credentials
-3. Server tạo access_token + refresh_token
-4. Trả về tokens cho client
-```
-
-### Refresh Flow
-```
-1. Client gửi refresh_token
-2. Server validate refresh_token
-3. Server tạo access_token mới
-4. Trả về access_token mới
-```
-
-### Protected Request Flow
-```
-1. Client gửi request với header: Authorization: Bearer <token>
-2. Server validate token
-3. Extract user_id từ token
-4. Load user từ database
-5. Thực hiện request
-```
-
----
-
-## 📝 Password Requirements
+### Password Requirements
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -131,186 +73,221 @@ HMACSHA256(base64(header) + "." + base64(payload), secret_key)
 │  ✅ At least 1 uppercase letter                                 │
 │  ✅ At least 1 lowercase letter                                 │
 │  ✅ At least 1 number                                           │
-│  ✅ At least 1 special character (!@#$%^&*)                     │
-│  ❌ No common passwords (password, 123456...)                   │
-│  ❌ No personal information (email, name...)                    │
+│  ✅ At least 1 special character                                │
+│  ❌ No common passwords                                         │
+│  ❌ No personal information                                     │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Password Hashing
+---
+
+## 👥 Authorization
+
+### Roles
+
+| Role | Code | Description |
+|------|------|-------------|
+| Student | `student` | Học viên |
+| Teacher | `teacher` | Giáo viên |
+| Admin | `admin` | Quản trị viên |
+
+### Role Hierarchy
+
+```
+admin > teacher > student
+```
+
+### Permission Matrix
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         PERMISSION MATRIX                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                          STUDENT    TEACHER    ADMIN
+─────────────────────────────────────────────────────────
+VIEW_COURSES                 ✅         ✅         ✅
+CREATE_COURSE                ❌         ✅         ✅
+UPDATE_COURSE                ❌       Owner       ✅
+DELETE_COURSE                ❌       Owner       ✅
+─────────────────────────────────────────────────────────
+VIEW_LESSONS                 ✅         ✅         ✅
+CREATE_LESSON                ❌       Owner       ✅
+UPDATE_LESSON                ❌       Owner       ✅
+DELETE_LESSON                ❌       Owner       ✅
+─────────────────────────────────────────────────────────
+VIEW_QUIZ                    ✅         ✅         ✅
+CREATE_QUIZ                  ❌       Owner       ✅
+SUBMIT_QUIZ                  ✅         ✅         ✅
+─────────────────────────────────────────────────────────
+CHAT_WITH_AI                 ✅         ✅         ✅
+VIEW_OWN_PROGRESS            ✅         ✅         ✅
+VIEW_STUDENT_PROGRESS        ❌         ✅         ✅
+─────────────────────────────────────────────────────────
+MANAGE_USERS                 ❌         ❌         ✅
+VIEW_ALL_DATA                ❌         ❌         ✅
+SYSTEM_CONFIG                ❌         ❌         ✅
+```
+
+### Owner Check
+
 ```python
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# Hash password
-hashed = pwd_context.hash("password123")
-
-# Verify password
-is_valid = pwd_context.verify("password123", hashed)
+# Course ownership
+if course.teacher_id != current_user.id and current_user.role != "admin":
+    raise HTTPException(status_code=403, detail="Not authorized")
 ```
 
 ---
 
-## 🛡️ Access Control
+## 🔒 Security Measures
 
-### Ownership-Based Access
+### 1. Rate Limiting
 
-```python
-# Example: Course ownership check
-async def update_course(course_id: int, data: CourseUpdate, user: User):
-    course = await course_repository.get_by_id(course_id)
+| Endpoint | Limit | Window |
+|----------|-------|--------|
+| /api/auth/login | 5 | 1 minute |
+| /api/auth/register | 3 | 1 hour |
+| /api/chat/*/messages | 20 | 1 hour |
+| Default | 100 | 1 minute |
 
-    if not course:
-        raise HTTPException(404, "Course not found")
+### 2. Token Storage
 
-    # Chỉ creator mới được sửa
-    if course.creator_id != user.id:
-        raise HTTPException(403, "Not authorized to update this course")
-
-    return await course_repository.update(course_id, data)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     TOKEN STORAGE                               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Client Side:                                                   │
+│  ├── Access Token: localStorage (short-lived)                   │
+│  └── Refresh Token: httpOnly cookie (secure)                    │
+│                                                                 │
+│  Server Side:                                                   │
+│  ├── Blacklisted tokens in Redis                                │
+│  └── TTL = token expiry time                                    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Public vs Private Resources
+### 3. Session Management
 
-| Resource | Public Access | Owner Only |
-|----------|---------------|------------|
-| Course list | ✅ | - |
-| Course detail | ✅ | - |
-| Create course | - | ✅ (authenticated) |
-| Update course | - | ✅ (creator) |
-| Delete course | - | ✅ (creator) |
-| Lesson list | ✅ | - |
-| Create lesson | - | ✅ (course creator) |
-| Quiz | ✅ (enrolled) | - |
-| Create quiz | - | ✅ (course creator) |
-| Progress | - | ✅ (owner) |
+- One active session per user (configurable)
+- Logout invalidates refresh token
+- Password change invalidates all tokens
 
----
-
-## 📋 Auth Endpoints
-
-| Method | Endpoint | Tác dụng | Auth Required |
-|--------|----------|----------|---------------|
-| POST | /api/auth/register | Đăng ký tài khoản | ❌ |
-| POST | /api/auth/login | Đăng nhập, trả về JWT | ❌ |
-| POST | /api/auth/refresh | Refresh access token | ❌ (refresh token) |
-| GET | /api/auth/me | Lấy thông tin user hiện tại | ✅ |
-| PUT | /api/auth/me | Cập nhật profile | ✅ |
-| PUT | /api/auth/password | Đổi mật khẩu | ✅ |
-
----
-
-## 🔧 Implementation
-
-### Dependencies
+### 4. Security Headers
 
 ```python
-# src/core/dependencies.py
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
-from sqlalchemy.ext.asyncio import AsyncSession
+# Response headers
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+```
 
-from src.core.config import settings
-from src.core.database import get_db
-from src.services.user_service import UserService
+---
 
-security = HTTPBearer()
+## 🔄 Auth Flows
 
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_db)
-) -> User:
-    """Get current authenticated user"""
-    try:
-        token = credentials.credentials
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        user_id = payload.get("sub")
-        if not user_id:
-            raise HTTPException(401, "Invalid token")
-    except JWTError:
-        raise HTTPException(401, "Invalid token")
+### Registration Flow
 
-    user_service = UserService(db)
-    user = await user_service.get_by_id(user_id)
+```
+┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+│  Input  │────▶│Validate │────▶│  Hash   │────▶│  Save   │
+│  Data   │     │  Data   │     │Password │     │  User   │
+└─────────┘     └─────────┘     └─────────┘     └─────────┘
+                                                      │
+                                                      ▼
+                                                ┌─────────┐
+                                                │ Return  │
+                                                │  User   │
+                                                └─────────┘
+```
 
-    if not user:
-        raise HTTPException(401, "User not found")
+### Login Flow
 
+```
+┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+│  Input  │────▶│  Find   │────▶│ Verify  │────▶│Generate │
+│  Data   │     │  User   │     │Password │     │ Tokens  │
+└─────────┘     └─────────┘     └─────────┘     └─────────┘
+                                                      │
+                                                      ▼
+                                                ┌─────────┐
+                                                │ Return  │
+                                                │ Tokens  │
+                                                └─────────┘
+```
+
+### Token Refresh Flow
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Refresh   │────▶│   Verify    │────▶│   Generate  │
+│   Token     │     │   Token     │     │ New Access  │
+└─────────────┘     └─────────────┘     └─────────────┘
+                          │
+                          ▼ Invalid
+                    ┌─────────────┐
+                    │   Reject    │
+                    │   Request   │
+                    └─────────────┘
+```
+
+---
+
+## 🛡️ Protected Routes
+
+### Dependency Pattern
+
+```python
+from fastapi import Depends, HTTPException
+from src.core.security import decode_token
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    payload = decode_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return await get_user(payload["sub"])
+
+async def require_role(roles: list[str], user = Depends(get_current_user)):
+    if user.role not in roles:
+        raise HTTPException(status_code=403, detail="Not authorized")
     return user
 ```
 
-### Usage in Controller
+### Usage Examples
 
 ```python
-# src/controllers/course_controller.py
-from fastapi import APIRouter, Depends
-from src.core.dependencies import get_current_user
-from src.models.user import User
+# Any authenticated user
+@router.get("/courses")
+async def list_courses(user = Depends(get_current_user)):
+    ...
 
-router = APIRouter(prefix="/api/courses")
+# Teacher only
+@router.post("/courses")
+async def create_course(user = Depends(require_role(["teacher", "admin"]))):
+    ...
 
-@router.put("/{course_id}")
-async def update_course(
-    course_id: int,
-    data: CourseUpdate,
-    user: User = Depends(get_current_user)  # Yêu cầu đăng nhập
-):
-    # user là user hiện tại từ JWT token
-    return await course_service.update(course_id, data, user)
+# Admin only
+@router.delete("/users/{id}")
+async def delete_user(user = Depends(require_role(["admin"]))):
+    ...
 ```
 
 ---
 
-## 🚨 Error Responses
+## 📝 Error Responses
 
 | Status | Error | Description |
 |--------|-------|-------------|
 | 401 | `invalid_token` | Token không hợp lệ |
 | 401 | `token_expired` | Token đã hết hạn |
 | 401 | `invalid_credentials` | Email/password sai |
-| 401 | `not_authenticated` | Chưa đăng nhập |
-| 403 | `not_authorized` | Không có quyền (không phải owner) |
+| 403 | `not_authorized` | Không có quyền |
 | 403 | `account_disabled` | Tài khoản bị khóa |
 | 422 | `validation_error` | Dữ liệu không hợp lệ |
 
 ---
 
-## 💾 Token Storage
-
-### Client Side
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     TOKEN STORAGE                               │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Access Token:                                                  │
-│  ├── localStorage (short-lived)                                 │
-│  └── Hoặc memory (recommended)                                  │
-│                                                                 │
-│  Refresh Token:                                                 │
-│  ├── httpOnly cookie (secure)                                   │
-│  └── Hoặc localStorage (less secure)                            │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Server Side
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                   BLACKLIST MANAGEMENT                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Redis Blacklist:                                               │
-│  ├── Key: blacklist:<token>                                     │
-│  ├── TTL: Token remaining lifetime                              │
-│  └── Used for logout/token revocation                           │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-*Tài liệu này định nghĩa authentication cho hệ thống.*
+*Tài liệu này định nghĩa authentication và authorization cho hệ thống.*
