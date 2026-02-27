@@ -9,6 +9,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                         DATABASE SCHEMA                                      │
+│                    Single Role: USER (no payment)                            │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────┐       ┌─────────────┐       ┌─────────────┐
@@ -17,9 +18,9 @@
 │ id (PK)     │       │ id (PK)     │       │ id (PK)     │
 │ email       │◀──┐   │ title       │◀──┐   │ course_id   │──▶ courses.id
 │ password    │   │   │ description │   │   │ title       │
-│ name        │   │   │ teacher_id  │───┘   │ content     │
-│ role        │   │   │ thumbnail   │       │ order       │
-│ avatar      │   │   │ is_published│       │ video_url   │
+│ name        │   │   │ creator_id  │───┘   │ content     │
+│ avatar      │   │   │ thumbnail   │       │ order       │
+│ is_active   │   │   │ is_published│       │ video_url   │
 │ created_at  │   │   │ created_at  │       │ duration    │
 └─────────────┘   │   └─────────────┘       └─────────────┘
                   │
@@ -86,13 +87,14 @@
 
 ### 1. users
 
+> **Lưu ý**: KHÔNG có cột `role`. Tất cả users có quyền như nhau.
+
 ```sql
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     name VARCHAR(100) NOT NULL,
-    role VARCHAR(20) NOT NULL DEFAULT 'student',
     avatar VARCHAR(500),
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -100,7 +102,6 @@ CREATE TABLE users (
 );
 
 CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role ON users(role);
 ```
 
 | Column | Type | Mô tả |
@@ -109,7 +110,6 @@ CREATE INDEX idx_users_role ON users(role);
 | email | VARCHAR(255) | Email (unique) |
 | password | VARCHAR(255) | Password đã hash (bcrypt) |
 | name | VARCHAR(100) | Tên hiển thị |
-| role | VARCHAR(20) | Role: student, teacher, admin |
 | avatar | VARCHAR(500) | URL avatar |
 | is_active | BOOLEAN | Trạng thái active |
 | created_at | TIMESTAMP | Thời gian tạo |
@@ -117,12 +117,14 @@ CREATE INDEX idx_users_role ON users(role);
 
 ### 2. courses
 
+> **Lưu ý**: Dùng `creator_id` thay vì `teacher_id`. Bất kỳ user nào cũng có thể tạo course.
+
 ```sql
 CREATE TABLE courses (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    teacher_id INTEGER REFERENCES users(id),
+    creator_id INTEGER REFERENCES users(id),
     thumbnail VARCHAR(500),
     category VARCHAR(100),
     level VARCHAR(50) DEFAULT 'beginner',
@@ -132,7 +134,7 @@ CREATE TABLE courses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_courses_teacher ON courses(teacher_id);
+CREATE INDEX idx_courses_creator ON courses(creator_id);
 CREATE INDEX idx_courses_category ON courses(category);
 CREATE INDEX idx_courses_published ON courses(is_published);
 ```
@@ -142,7 +144,7 @@ CREATE INDEX idx_courses_published ON courses(is_published);
 | id | SERIAL | Primary key |
 | title | VARCHAR(255) | Tên khóa học |
 | description | TEXT | Mô tả chi tiết |
-| teacher_id | INTEGER | FK → users.id |
+| creator_id | INTEGER | FK → users.id (người tạo) |
 | thumbnail | VARCHAR(500) | URL hình ảnh |
 | category | VARCHAR(100) | Danh mục |
 | level | VARCHAR(50) | Level: beginner, intermediate, advanced |
@@ -380,7 +382,7 @@ CREATE INDEX idx_documents_course ON documents(course_id);
   "id": 1,
   "title": "Python cơ bản từ A-Z",
   "description": "Khóa học Python dành cho người mới bắt đầu",
-  "teacher_id": 2,
+  "creator_id": 1,
   "thumbnail": "https://example.com/images/python.jpg",
   "category": "programming",
   "level": "beginner",
@@ -388,11 +390,11 @@ CREATE INDEX idx_documents_course ON documents(course_id);
   "is_published": true,
   "created_at": "2026-02-27T10:00:00Z",
   "updated_at": "2026-02-27T15:00:00Z",
-  "teacher": {
-    "id": 2,
-    "name": "GV. Nguyễn Văn B",
-    "email": "teacher@example.com",
-    "avatar": "https://example.com/avatars/teacher.jpg"
+  "creator": {
+    "id": 1,
+    "name": "Nguyễn Văn A",
+    "email": "user@example.com",
+    "avatar": "https://example.com/avatars/user.jpg"
   },
   "lessons_count": 10,
   "enrolled_count": 150
@@ -575,8 +577,7 @@ CREATE INDEX idx_documents_course ON documents(course_id);
 | Table | Index | Columns |
 |-------|-------|---------|
 | users | idx_users_email | email |
-| users | idx_users_role | role |
-| courses | idx_courses_teacher | teacher_id |
+| courses | idx_courses_creator | creator_id |
 | courses | idx_courses_category | category |
 | lessons | idx_lessons_course | course_id |
 | lessons | idx_lessons_order | course_id, order |
@@ -587,11 +588,11 @@ CREATE INDEX idx_documents_course ON documents(course_id);
 ## 🔐 Data Constraints
 
 ### Business Rules
-- User không thể tự đổi role (chỉ admin)
 - Lesson order phải unique trong course
 - Quiz attempt không vượt quá max_attempts
 - Score từ 0-100
 - Password phải hash với bcrypt
+- **Ownership**: User chỉ sửa/xóa resource do mình tạo
 
 ### Referential Integrity
 - CASCADE DELETE: lessons khi xóa course
@@ -601,4 +602,22 @@ CREATE INDEX idx_documents_course ON documents(course_id);
 
 ---
 
+## 🎯 Access Control (Ownership-Based)
+
+| Resource | Public | Creator Only |
+|----------|--------|--------------|
+| Course list | ✅ | - |
+| Course detail | ✅ | - |
+| Create course | - | ✅ (any user) |
+| Update course | - | ✅ (creator) |
+| Delete course | - | ✅ (creator) |
+| Lesson list | ✅ | - |
+| Create lesson | - | ✅ (course creator) |
+| Quiz | ✅ (enrolled) | - |
+| Create quiz | - | ✅ (course creator) |
+| Progress | - | ✅ (owner) |
+
+---
+
 *Tài liệu này định nghĩa cấu trúc database cho toàn bộ hệ thống.*
+*Version: 1.1 - Single role (user), no payment*

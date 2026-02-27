@@ -12,8 +12,8 @@
 | [01-BUSINESS-MODEL.md](./01-BUSINESS-MODEL.md) | Business Model & User Personas |
 | [02-DATABASE-DESIGN.md](./02-DATABASE-DESIGN.md) | Database Schema + JSON Structures |
 | [03-CODE-STRUCTURE.md](./03-CODE-STRUCTURE.md) | Code Structure & Patterns |
-| [04-API-DESIGN.md](./04-API-DESIGN.md) | REST API Endpoints (39 APIs) |
-| [05-AUTH-DESIGN.md](./05-AUTH-DESIGN.md) | Authentication & Authorization |
+| [04-API-DESIGN.md](./04-API-DESIGN.md) | REST API Endpoints |
+| [05-AUTH-DESIGN.md](./05-AUTH-DESIGN.md) | Authentication |
 | [06-AI-CHAT-FLOW.md](./06-AI-CHAT-FLOW.md) | Luồng tích hợp AI Chat |
 | [07-SECURITY.md](./07-SECURITY.md) | Security & Access Control |
 
@@ -22,13 +22,14 @@
 ## 🎯 Tóm Tắt Dự Án
 
 ### Concept
-**BE AI TUTOR** là nền tảng học tập trực tuyến tích hợp AI, hỗ trợ học viên học tập thông qua khóa học, bài giảng, bài kiểm tra và trò chuyện với AI tutor.
+**BE AI TUTOR** là nền tảng học tập trực tuyến tích hợp AI, hỗ trợ người dùng học tập thông qua khóa học, bài giảng, bài kiểm tra và trò chuyện với AI tutor.
 
 ### Điểm Khác Biệt
 - **AI Tutor**: Trò chuyện với AI để được hỗ trợ học tập 24/7
 - **Context-Aware AI**: AI hiểu ngữ cảnh khóa học đang học
 - **Quiz System**: Hệ thống bài kiểm tra tự động với chấm điểm
 - **Progress Tracking**: Theo dõi tiến độ học tập chi tiết
+- **Miễn phí 100%**: Không có phí, không thanh toán
 
 ---
 
@@ -73,33 +74,54 @@
 
 ---
 
-## 👥 User Personas
+## 👥 User Model
 
-| Persona | Vai trò | Actions |
-|---------|---------|---------|
-| **Student** | Học viên | Xem khóa học, làm bài tập, chat AI, xem tiến độ |
-| **Teacher** | Giáo viên | Tạo khóa học, bài học, quiz, xem tiến độ học viên |
-| **Admin** | Quản trị viên | Quản lý users, courses, toàn bộ hệ thống |
+### Single Role: User
+
+Hệ thống chỉ có **1 role duy nhất** là `user`. Mọi user đều có quyền như nhau.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     USER PERMISSIONS                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ✅ Tất cả users có quyền như nhau:                             │
+│  ├── Xem và tạo khóa học                                        │
+│  ├── Xem và tạo bài học                                         │
+│  ├── Xem và tạo quiz                                            │
+│  ├── Làm quiz và xem kết quả                                    │
+│  ├── Chat với AI                                                │
+│  ├── Xem tiến độ học tập                                        │
+│  └── Upload tài liệu                                            │
+│                                                                 │
+│  ✅ Ownership-based access:                                     │
+│  └── Chỉ sửa/xóa resource do mình tạo                           │
+│                                                                 │
+│  ❌ KHÔNG CÓ ROLE-BASED ACCESS                                  │
+│  ❌ KHÔNG CÓ THANH TOÁN / PHÍ                                   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## 🔄 Core Flows
 
-### 1. Student Flow
+### Learning Flow
 ```
-Đăng ký → Xem danh sách khóa học → Đăng ký khóa → Học bài →
+Đăng ký → Xem danh sách khóa học → Học bài →
 Làm quiz → Chat với AI → Xem tiến độ
 ```
 
-### 2. Teacher Flow
+### Creating Flow
 ```
-Tạo khóa học → Thêm bài học → Tạo quiz → Xem tiến độ học viên →
-Cập nhật nội dung
+Tạo khóa học → Thêm bài học → Tạo quiz →
+Upload tài liệu → Xem progress
 ```
 
-### 3. AI Chat Flow
+### AI Chat Flow
 ```
-Student chọn khóa → Mở chat → Gửi câu hỏi → AI phản hồi (context: khóa học) →
+Chọn khóa → Mở chat → Gửi câu hỏi → AI phản hồi (context: khóa học) →
 Lưu lịch sử
 ```
 
@@ -111,13 +133,11 @@ Lưu lịch sử
 |-------|----------|----------|
 | **Phase 1** | Database Models & Migrations | High |
 | **Phase 2** | Auth API (Register, Login, JWT) | High |
-| **Phase 3** | User Management APIs | High |
-| **Phase 4** | Course & Lesson APIs | High |
-| **Phase 5** | Quiz System APIs | High |
-| **Phase 6** | AI Chat Integration | High |
-| **Phase 7** | Progress Tracking | Medium |
-| **Phase 8** | Document Management | Medium |
-| **Phase 9** | Admin Dashboard APIs | Medium |
+| **Phase 3** | Course & Lesson APIs | High |
+| **Phase 4** | Quiz System APIs | High |
+| **Phase 5** | AI Chat Integration | High |
+| **Phase 6** | Progress Tracking | Medium |
+| **Phase 7** | Document Management | Medium |
 
 ---
 
@@ -125,6 +145,8 @@ Lưu lịch sử
 
 | Decision | Choice | Reason |
 |----------|--------|--------|
+| User Role | Single role (user) | Đơn giản hóa, mọi user có quyền như nhau |
+| Pricing | Miễn phí 100% | Không có payment, không thu phí |
 | Database | PostgreSQL | Relational data, ACID, full-text search |
 | Auth | JWT | Stateless, scalable, mobile-friendly |
 | AI Provider | Claude API / OpenAI | Best-in-class LLM capabilities |
@@ -144,4 +166,4 @@ Lưu lịch sử
 ---
 
 *Tài liệu được tạo ngày: 2026-02-27*
-*Version: 1.0*
+*Version: 1.1 - Single role, no payment*
