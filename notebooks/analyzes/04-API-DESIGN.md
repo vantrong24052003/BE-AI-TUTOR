@@ -4,6 +4,61 @@
 
 ---
 
+## 📋 API Endpoints Summary
+
+| STT | File | Method | Endpoint | Tác dụng |
+|-----|------|--------|----------|----------|
+| **AUTH** |
+| 01 | auth_controller.py | POST | /api/auth/register | Đăng ký tài khoản mới |
+| 02 | auth_controller.py | POST | /api/auth/login | Đăng nhập, trả về JWT token |
+| 03 | auth_controller.py | POST | /api/auth/refresh | Refresh access token |
+| 04 | auth_controller.py | GET | /api/auth/me | Lấy thông tin user hiện tại |
+| **USERS** |
+| 05 | user_controller.py | GET | /api/users | Danh sách users (Admin) |
+| 06 | user_controller.py | GET | /api/users/{id} | Chi tiết user |
+| 07 | user_controller.py | POST | /api/users | Tạo user mới (Admin) |
+| 08 | user_controller.py | PUT | /api/users/{id} | Cập nhật user |
+| 09 | user_controller.py | DELETE | /api/users/{id} | Xóa user (Admin) |
+| **COURSES** |
+| 10 | course_controller.py | GET | /api/courses | Danh sách khóa học |
+| 11 | course_controller.py | GET | /api/courses/{id} | Chi tiết khóa học |
+| 12 | course_controller.py | POST | /api/courses | Tạo khóa học mới (Teacher) |
+| 13 | course_controller.py | PUT | /api/courses/{id} | Cập nhật khóa học |
+| 14 | course_controller.py | DELETE | /api/courses/{id} | Xóa khóa học |
+| 15 | course_controller.py | POST | /api/courses/{id}/enroll | Đăng ký khóa học |
+| **LESSONS** |
+| 16 | lesson_controller.py | GET | /api/courses/{id}/lessons | Danh sách bài học |
+| 17 | lesson_controller.py | GET | /api/lessons/{id} | Chi tiết bài học |
+| 18 | lesson_controller.py | POST | /api/courses/{id}/lessons | Tạo bài học mới |
+| 19 | lesson_controller.py | PUT | /api/lessons/{id} | Cập nhật bài học |
+| 20 | lesson_controller.py | DELETE | /api/lessons/{id} | Xóa bài học |
+| **QUIZZES** |
+| 21 | quiz_controller.py | GET | /api/lessons/{id}/quiz | Lấy quiz của bài học |
+| 22 | quiz_controller.py | GET | /api/quizzes/{id} | Chi tiết quiz |
+| 23 | quiz_controller.py | POST | /api/quizzes | Tạo quiz mới |
+| 24 | quiz_controller.py | PUT | /api/quizzes/{id} | Cập nhật quiz |
+| 25 | quiz_controller.py | DELETE | /api/quizzes/{id} | Xóa quiz |
+| 26 | quiz_controller.py | POST | /api/quizzes/{id}/submit | Nộp bài làm quiz |
+| 27 | quiz_controller.py | GET | /api/quizzes/{id}/attempts | Lịch sử làm quiz |
+| **CHAT** |
+| 28 | chat_controller.py | GET | /api/chat/conversations | Danh sách conversations |
+| 29 | chat_controller.py | GET | /api/chat/conversations/{id} | Chi tiết conversation |
+| 30 | chat_controller.py | POST | /api/chat/conversations | Tạo conversation mới |
+| 31 | chat_controller.py | DELETE | /api/chat/conversations/{id} | Xóa conversation |
+| 32 | chat_controller.py | GET | /api/chat/conversations/{id}/messages | Danh sách tin nhắn |
+| 33 | chat_controller.py | POST | /api/chat/conversations/{id}/messages | Gửi tin nhắn + AI response |
+| **PROGRESS** |
+| 34 | progress_controller.py | GET | /api/progress | Tiến độ tổng quan |
+| 35 | progress_controller.py | GET | /api/progress/courses/{id} | Tiến độ theo khóa học |
+| 36 | progress_controller.py | POST | /api/progress/lessons/{id}/complete | Đánh dấu hoàn thành |
+| **DOCUMENTS** |
+| 37 | document_controller.py | GET | /api/courses/{id}/documents | Danh sách tài liệu |
+| 38 | document_controller.py | GET | /api/documents/{id} | Download tài liệu |
+| 39 | document_controller.py | POST | /api/courses/{id}/documents | Upload tài liệu |
+| 40 | document_controller.py | DELETE | /api/documents/{id} | Xóa tài liệu |
+
+---
+
 ## 📋 API Overview
 
 ### Base URL

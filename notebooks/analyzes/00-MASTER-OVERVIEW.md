@@ -10,12 +10,12 @@
 |------|-------|
 | [00-MASTER-OVERVIEW.md](./00-MASTER-OVERVIEW.md) | Tổng quan dự án (file này) |
 | [01-BUSINESS-MODEL.md](./01-BUSINESS-MODEL.md) | Business Model & User Personas |
-| [02-DATABASE-DESIGN.md](./02-DATABASE-DESIGN.md) | Database Schema chi tiết |
-| [03-API-DESIGN.md](./03-API-DESIGN.md) | REST API Endpoints |
-| [04-AUTH-DESIGN.md](./04-AUTH-DESIGN.md) | Authentication & Authorization |
-| [05-AI-CHAT-FLOW.md](./05-AI-CHAT-FLOW.md) | Luồng tích hợp AI Chat |
-| [06-SECURITY.md](./06-SECURITY.md) | Security & Access Control |
-| [07-CODE-STRUCTURE.md](./07-CODE-STRUCTURE.md) | Code Structure Design |
+| [02-DATABASE-DESIGN.md](./02-DATABASE-DESIGN.md) | Database Schema + JSON Structures |
+| [03-CODE-STRUCTURE.md](./03-CODE-STRUCTURE.md) | Code Structure & Patterns |
+| [04-API-DESIGN.md](./04-API-DESIGN.md) | REST API Endpoints (39 APIs) |
+| [05-AUTH-DESIGN.md](./05-AUTH-DESIGN.md) | Authentication & Authorization |
+| [06-AI-CHAT-FLOW.md](./06-AI-CHAT-FLOW.md) | Luồng tích hợp AI Chat |
+| [07-SECURITY.md](./07-SECURITY.md) | Security & Access Control |
 
 ---
 
