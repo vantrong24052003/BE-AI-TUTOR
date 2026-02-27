@@ -1,92 +1,100 @@
-# BE AI TUTOR - Agent Rules
+# BE AI TUTOR - Quy tắc Agent
 
-## Project Overview
+## Tổng quan dự án
 
-Backend for AI Tutor - Nền tảng học tập thông minh tích hợp AI.
+Backend cho hệ thống AI Tutor - Nền tảng học tập thông minh với tích hợp AI.
 
-## Core Features
+## Quy tắc phát triển
 
-1. **Authentication**: JWT-based auth với roles (student, teacher, admin)
-2. **Course Management**: CRUD khóa học và bài học
-3. **Quiz System**: Tạo và làm bài kiểm tra tự động
-4. **AI Chat**: Trò chuyện với AI để hỗ trợ học tập
-5. **Progress Tracking**: Theo dõi tiến độ học viên
-6. **Document Management**: Quản lý tài liệu học tập
+### 1. Đọc hiểu yêu cầu
+- Luôn đọc kỹ tài liệu đặc tả trong `notebooks/`
+- Hiểu rõ business requirements trước khi code
+- Hỏi lại nếu yêu cầu không rõ ràng
 
-## Database Models
+### 2. Tuân thủ kiến trúc
+- Tuân thủ đúng cấu trúc MVC
+- Không skip layer (Controller → Service → Repository)
+- Giữ cho mỗi layer có trách nhiệm riêng
 
-```python
-# User roles
-class UserRole(enum.Enum):
-    STUDENT = "student"
-    TEACHER = "teacher"
-    ADMIN = "admin"
+### 3. Ưu tiên async
+- Mọi I/O operation phải async
+- Không dùng blocking calls
+- Database operations phải dùng async session
 
-# Core tables
-- users: id, email, password, role, name, created_at
-- courses: id, title, description, teacher_id, created_at
-- lessons: id, course_id, title, content, order
-- quizzes: id, lesson_id, title, time_limit
-- questions: id, quiz_id, content, type
-- answers: id, question_id, content, is_correct
-- user_progress: id, user_id, lesson_id, completed, score
-- conversations: id, user_id, course_id, created_at
-- messages: id, conversation_id, role, content, created_at
-- documents: id, course_id, name, file_path, type
-```
+### 4. Validation nghiêm ngặt
+- Validate input ở Schema layer
+- Validate business logic ở Service layer
+- Không tin tưởng input từ client
 
-## API Endpoints
+### 5. Error handling
+- Luôn handle exceptions
+- Log errors properly
+- Trả về error message rõ ràng cho client
 
-### Auth
-- POST /api/auth/register
-- POST /api/auth/login
-- POST /api/auth/refresh
-- GET /api/auth/me
+## Phân quyền (Authorization)
 
-### Courses
-- GET /api/courses
-- POST /api/courses (teacher+)
-- GET /api/courses/{id}
-- PUT /api/courses/{id} (teacher+)
-- DELETE /api/courses/{id} (teacher+)
+### Student
+- Xem danh sách khóa học
+- Đăng ký khóa học
+- Làm bài tập, quiz
+- Chat với AI
+- Xem tiến độ của bản thân
 
-### Lessons
-- GET /api/courses/{course_id}/lessons
-- POST /api/courses/{course_id}/lessons (teacher+)
-- GET /api/lessons/{id}
-- PUT /api/lessons/{id} (teacher+)
-- DELETE /api/lessons/{id} (teacher+)
+### Teacher
+- Tất cả quyền Student
+- Tạo/Cập nhật/Xóa khóa học
+- Tạo/Cập nhật/Xóa bài học
+- Tạo/Cập nhật/Xóa quiz
+- Xem tiến độ học viên trong khóa
 
-### Quiz
-- GET /api/lessons/{lesson_id}/quiz
-- POST /api/quizzes (teacher+)
-- POST /api/quizzes/{id}/submit (student)
-- GET /api/quizzes/{id}/results
+### Admin
+- Tất cả quyền Teacher
+- Quản lý users
+- Quản lý toàn bộ hệ thống
 
-### Chat
-- POST /api/chat/conversations
-- GET /api/chat/conversations
-- POST /api/chat/conversations/{id}/messages
-- GET /api/chat/conversations/{id}/messages
+## Tích hợp AI
 
-### Progress
-- GET /api/progress (student's own progress)
-- GET /api/progress/courses/{course_id}
-- POST /api/progress/lessons/{lesson_id}/complete
+### Chat Rules
+- Lưu trữ lịch sử conversation
+- Context-aware: AI biết về khóa học hiện tại
+- Rate limiting cho API calls
+- Timeout cho long-running requests
+
+### Response Handling
+- Xử lý lỗi từ AI API gracefully
+- Fallback response khi AI không available
+- Cache common responses
+
+## Database Rules
+
+### Migration
+- Tạo migration cho mọi thay đổi schema
+- Review migration trước khi apply
+- Backup trước khi migrate production
+
+### Query Optimization
+- Sử dụng eager loading khi cần
+- Pagination cho list endpoints
+- Index các trường thường query
+
+## Testing Rules
+
+### Bắt buộc test
+- Mọi API endpoint phải có test
+- Mọi business logic phải có unit test
+- Test cả success và error cases
+
+### Test Data
+- Sử dụng fixtures trong conftest.py
+- Không phụ thuộc vào production data
+- Reset state sau mỗi test
 
 ## Commands
 
-```bash
-# Run server
-uvicorn src.main:app --reload
-
-# Run tests
-pytest
-
-# Migration
-alembic revision --autogenerate -m "message"
-alembic upgrade head
-
-# Docker
-docker-compose up -d
-```
+| Command | Mô tả |
+|---------|-------|
+| `uvicorn src.main:app --reload` | Chạy dev server |
+| `pytest` | Chạy tests |
+| `alembic revision --autogenerate -m "msg"` | Tạo migration |
+| `alembic upgrade head` | Apply migrations |
+| `docker-compose up -d` | Chạy với Docker |

@@ -1,86 +1,103 @@
-# BE AI TUTOR - Project Rules
+# BE AI TUTOR - Quy tắc dự án
 
-## Project Overview
+## Giới thiệu
 
-Backend for AI Tutor - Nền tảng học tập thông minh với AI hỗ trợ.
+BE AI TUTOR là hệ thống backend cho nền tảng học tập thông minh với AI hỗ trợ.
 
-## Features
+## Nguyên tắc phát triển
 
-- **Chat AI**: Trò chuyện với AI để học tập
-- **Quản lý khóa học**: CRUD khóa học, bài học
-- **Hệ thống Quiz**: Tạo và làm bài kiểm tra
-- **Theo dõi tiến độ**: Tracking học tập của học viên
-- **Quản lý tài liệu**: Upload và quản lý tài liệu học tập
+### 1. Kiến trúc MVC
+- **Controller**: Chỉ xử lý HTTP request/response, không chứa business logic
+- **Service**: Chứa toàn bộ business logic, có thể tái sử dụng
+- **Repository**: Chỉ thao tác với database, không biết về business
+- **Model**: Định nghĩa cấu trúc dữ liệu ORM
+- **Schema**: Validate input/output bằng Pydantic
 
-## User Roles
+### 2. Phân tách trách nhiệm (Separation of Concerns)
+- Mỗi layer có trách nhiệm riêng, không được làm công việc của layer khác
+- Controller không gọi trực tiếp Repository, phải thông qua Service
+- Service không biết về HTTP (không raise HTTPException)
 
-| Role | Description |
-|------|-------------|
-| **Student** | Học viên - xem khóa học, làm bài tập, chat với AI |
-| **Teacher** | Giáo viên - tạo khóa học, bài học, quiz |
-| **Admin** | Quản trị viên - quản lý toàn bộ hệ thống |
+### 3. Dependency Injection
+- Sử dụng FastAPI Depends() để inject dependencies
+- Database session, services, repositories đều được inject
+- Giúp dễ test và mock
 
-## Database Models
+### 4. Async First
+- Tất cả I/O operations phải dùng async/await
+- Database queries phải dùng async SQLAlchemy
+- External API calls phải dùng httpx async
 
-### Core Models
-- `User` - Người dùng (student, teacher, admin)
-- `Course` - Khóa học
-- `Lesson` - Bài học
-- `Quiz` - Bài kiểm tra
-- `Question` - Câu hỏi
-- `Answer` - Câu trả lời
-- `UserProgress` - Tiến độ học tập
-- `Conversation` - Lịch sử chat với AI
-- `Message` - Tin nhắn trong conversation
-- `Document` - Tài liệu học tập
+### 5. Error Handling
+- Controller: Xử lý errors và trả về HTTPException
+- Service: Raise custom exceptions, không biết về HTTP
+- Repository: Raise database-related exceptions
+- Tất cả errors phải được log
 
-## API Structure
+### 6. Validation
+- Input validation: Pydantic Schema
+- Business validation: Service layer
+- Database constraints: Model layer
 
-```
-/api
-├── /auth          # Authentication (login, register, refresh)
-├── /users         # User management
-├── /courses       # Course CRUD
-├── /lessons       # Lesson CRUD
-├── /quizzes       # Quiz CRUD
-├── /chat          # AI Chat endpoints
-├── /documents     # Document management
-└── /progress      # Learning progress
-```
+## Cấu trúc thư mục
 
-## MVC Architecture
+| Thư mục | Mục đích |
+|---------|----------|
+| `controllers/` | HTTP handlers, routing |
+| `services/` | Business logic |
+| `repositories/` | Database operations |
+| `models/` | SQLAlchemy ORM |
+| `schemas/` | Pydantic request/response |
+| `core/` | Config, DB, Security |
 
-```
-src/
-├── controllers/     # HTTP handlers
-│   ├── auth_controller.py
-│   ├── user_controller.py
-│   ├── course_controller.py
-│   ├── lesson_controller.py
-│   ├── quiz_controller.py
-│   ├── chat_controller.py
-│   ├── document_controller.py
-│   └── progress_controller.py
-├── services/        # Business logic
-├── repositories/    # Data access
-├── models/          # SQLAlchemy models
-├── schemas/         # Pydantic schemas
-├── core/            # Config, DB, Security
-└── main.py
-```
+## Quy tắc đặt tên
 
-## AI Integration
+| Loại | Convention |
+|------|------------|
+| File | `snake_case.py` |
+| Class | `PascalCase` |
+| Function | `snake_case` |
+| Variable | `snake_case` |
+| Constant | `UPPER_SNAKE_CASE` |
+| Router | `router` |
 
-- Sử dụng Claude API hoặc OpenAI cho chat
-- Context-aware responses dựa trên khóa học
-- Lưu trữ lịch sử conversation
+## API Convention
 
-## Tech Stack
+### Endpoint Naming
+- Sử dụng danh từ số nhiều: `/users`, `/courses`, `/lessons`
+- RESTful: GET, POST, PUT, PATCH, DELETE
+- Nested resources: `/courses/{id}/lessons`
 
-- **Framework**: FastAPI
-- **Database**: PostgreSQL (async)
-- **ORM**: SQLAlchemy 2.0
-- **Cache**: Redis
-- **AI**: Claude API / OpenAI
-- **Auth**: JWT
-- **File Storage**: Local / S3
+### Response Format
+- Thành công: Trả về data trực tiếp hoặc wrap trong object
+- Lỗi: `{ "detail": "error message" }`
+- Pagination: `{ "items": [], "total": 100, "page": 1, "size": 10 }`
+
+### HTTP Status Codes
+- 200: Success
+- 201: Created
+- 204: No Content (delete)
+- 400: Bad Request
+- 401: Unauthorized
+- 403: Forbidden
+- 404: Not Found
+- 422: Validation Error
+- 500: Internal Server Error
+
+## Security Rules
+
+### Authentication
+- Sử dụng JWT Bearer token
+- Token hết hạn sau 30 phút (configurable)
+- Refresh token mechanism
+
+### Authorization
+- Kiểm tra role trước khi thực hiện action
+- Student: Xem khóa học, làm bài tập, chat
+- Teacher: CRUD courses, lessons, quizzes
+- Admin: Toàn quyền
+
+### Data Protection
+- Password phải được hash (bcrypt)
+- Không trả về password trong response
+- Validate và sanitize tất cả input

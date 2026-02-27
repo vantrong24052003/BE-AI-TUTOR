@@ -1,118 +1,76 @@
-# FastAPI Best Practices
+# FastAPI Development Rules
 
-## Async/Await
+## Code Style
 
-Always use async for database operations:
+### 1. Type Hints
+- Bắt buộc có type hints cho tất cả functions
+- Sử dụng Python 3.10+ syntax: `str | None` thay vì `Optional[str]`
+- Sử dụng `list[User]` thay vì `List[User]`
 
-```python
-# Good
-async def get_users(db: AsyncSession):
-    result = await db.execute(select(User))
-    return result.scalars().all()
+### 2. Imports
+- Standard library trước
+- Third-party libraries sau
+- Local imports cuối cùng
+- Sử dụng absolute imports: `from src.services import UserService`
 
-# Bad - blocking
-def get_users(db: Session):
-    return db.query(User).all()
-```
+### 3. Documentation
+- Docstring cho tất cả public functions/classes
+- Sử dụng Google style docstrings
+- API endpoints phải có mô tả trong decorator
 
-## Dependency Injection
+## FastAPI Specifics
 
-Use FastAPI's dependency injection:
+### Router Organization
+- Mỗi controller một file riêng
+- Export `router` từ mỗi controller file
+- Prefix cho các endpoints liên quan
 
-```python
-from fastapi import Depends
+### Dependency Injection Pattern
+- Database session: `db: AsyncSession = Depends(get_db)`
+- Current user: `user: User = Depends(get_current_user)`
+- Services: `service: UserService = Depends()`
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    # Decode token and return user
-    pass
+### Request/Response Models
+- Luôn định nghĩa Pydantic schema cho request body
+- Luôn định nghĩa response_model cho endpoints
+- Tách biệt Create, Update, Response schemas
 
-@router.get("/me")
-async def get_me(user: User = Depends(get_current_user)):
-    return user
-```
+### Background Tasks
+- Sử dụng BackgroundTasks cho các tác vụ không blocking
+- AI chat responses có thể dùng background tasks
+- Email notifications dùng background tasks
 
-## Error Handling
+## Database Rules
 
-Use HTTPException for API errors:
+### SQLAlchemy Models
+- Mỗi model một file trong `models/`
+- Sử dụng `Mapped` type hints
+- Định nghĩa relationships rõ ràng
+- `__tablename__` bắt buộc
 
-```python
-from fastapi import HTTPException, status
+### Query Patterns
+- Sử dụng async session
+- Sử dụng `select()` statement
+- Eager loading với `selectinload()` khi cần
 
-@router.get("/users/{user_id}")
-async def get_user(user_id: int):
-    user = await user_service.get(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    return user
-```
+### Transactions
+- Commit trong service layer
+- Rollback khi có exception
+- Sử dụng context manager cho session
 
-## Pydantic Schemas
+## Testing Rules
 
-Separate schemas for different operations:
+### Test Organization
+- `tests/` mirror `src/` structure
+- `conftest.py` cho fixtures
+- `test_*.py` naming convention
 
-```python
-from pydantic import BaseModel
+### What to Test
+- Controllers: HTTP responses, status codes
+- Services: Business logic, edge cases
+- Repositories: Database operations
 
-class UserBase(BaseModel):
-    email: str
-    name: str
-
-class UserCreate(UserBase):
-    password: str
-
-class UserUpdate(BaseModel):
-    name: str | None = None
-    email: str | None = None
-
-class UserResponse(UserBase):
-    id: int
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-```
-
-## Database Sessions
-
-Use dependency injection for database sessions:
-
-```python
-async def get_db():
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
-```
-
-## Response Models
-
-Always define response models:
-
-```python
-@router.post("", response_model=UserResponse, status_code=201)
-async def create_user(data: UserCreate):
-    ...
-```
-
-## Validation
-
-Use Pydantic validators:
-
-```python
-from pydantic import field_validator
-
-class UserCreate(BaseModel):
-    email: str
-    password: str
-
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters")
-        return v
-```
+### Test Principles
+- Mỗi test độc lập, không phụ thuộc test khác
+- Sử dụng in-memory SQLite cho unit tests
+- Mock external services (AI, email)
