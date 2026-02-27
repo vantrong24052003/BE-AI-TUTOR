@@ -1,156 +1,120 @@
 # BE AI TUTOR - Business Model & User Personas
 
-> Định nghĩa business model, user personas và user stories
+> Định nghĩa business model và user stories
 
 ---
 
 ## 🎯 Business Model
 
 ### Value Proposition
-- **Cho Student**: Học tập mọi lúc mọi nơi, được AI hỗ trợ 24/7, theo dõi tiến độ
-- **Cho Teacher**: Dễ dàng tạo và quản lý khóa học, theo dõi học viên
-- **Cho Platform**: Thu phí khóa học, xây dựng cộng đồng học tập
+- **Cho User**: Học tập mọi lúc mọi nơi, được AI hỗ trợ 24/7, tạo và chia sẻ khóa học, theo dõi tiến độ
+- **Điểm khác biệt**: AI Tutor context-aware, miễn phí hoàn toàn
 
 ### Revenue Model
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     REVENUE STREAMS                             │
+│                     REVENUE MODEL                               │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  Phase 1: MIỄN PHÍ                                             │
-│  └── Thu hút users, xây dựng content                           │
+│  ❌ KHÔNG CÓ THU PHÍ                                            │
+│  └── Platform hoàn toàn miễn phí                                │
 │                                                                 │
-│  Phase 2+: COURSE FEE                                          │
-│  └── Thu phí trên khóa học trả phí                             │
+│  ❌ KHÔNG CÓ PREMIUM                                            │
+│  └── Tất cả features đều free                                   │
 │                                                                 │
-│  Future: PREMIUM FEATURES                                      │
-│  ├── Premium courses (chứng chỉ)                               │
-│  ├── 1-on-1 tutoring                                           │
-│  └── AI unlimited chat                                         │
+│  ✅ MỤC TIÊU                                                    │
+│  ├── Giáo dục miễn phí cho mọi người                            │
+│  ├── Xây dựng cộng đồng học tập                                 │
+│  └── Lan tỏa kiến thức                                          │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 👥 User Personas
+## 👥 User Persona
 
-### Persona 1: Student (Học Viên)
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         STUDENT PERSONA                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Name: Nguyễn Văn A (Sinh viên)                                │
-│  Age: 18-25                                                    │
-│  Device: Mobile (60%), Desktop (40%)                           │
-│                                                                 │
-│  NEEDS:                                                        │
-│  ├── Học tập linh hoạt, mọi lúc mọi nơi                        │
-│  ├── Được hỗ trợ khi gặp khó khăn                              │
-│  ├── Theo dõi tiến độ học tập                                  │
-│  └── Làm bài kiểm tra để đánh giá bản thân                     │
-│                                                                 │
-│  PAIN POINTS:                                                  │
-│  ├── Không có người hướng dẫn khi gặp bài khó                  │
-│  ├── Không biết mình đang ở level nào                          │
-│  ├── Khó theo dõi tiến độ học                                  │
-│  └── Thiếu động lực học tập                                   │
-│                                                                 │
-│  USER STORIES:                                                 │
-│  ├── Tôi muốn đăng ký tài khoản                                │
-│  ├── Tôi muốn xem danh sách khóa học                           │
-│  ├── Tôi muốn đăng ký khóa học                                 │
-│  ├── Tôi muốn xem bài học theo thứ tự                          │
-│  ├── Tôi muốn làm bài kiểm tra                                 │
-│  ├── Tôi muốn xem kết quả và đáp án                            │
-│  ├── Tôi muốn chat với AI để hỏi bài                           │
-│  ├── Tôi muốn xem tiến độ học tập                              │
-│  └── Tôi muốn xem lịch sử chat                                 │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Persona 2: Teacher (Giáo Viên)
+### User (Người Dùng) - Role duy nhất
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         TEACHER PERSONA                         │
+│                         USER PERSONA                            │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  Name: Trần Thị B (Giảng viên)                                 │
-│  Age: 25-45                                                    │
-│  Device: Desktop (80%), Mobile (20%)                           │
+│  Name: Nguyễn Văn A                                             │
+│  Age: 18-35                                                     │
+│  Device: Mobile (60%), Desktop (40%)                            │
 │                                                                 │
-│  NEEDS:                                                        │
-│  ├── Tạo và quản lý khóa học dễ dàng                           │
-│  ├── Theo dõi tiến độ học viên                                 │
-│  ├── Tạo bài kiểm tra tự động                                  │
-│  └── Upload tài liệu học tập                                   │
+│  NEEDS:                                                         │
+│  ├── Học tập linh hoạt, mọi lúc mọi nơi                         │
+│  ├── Được hỗ trợ khi gặp khó khăn (AI Tutor)                    │
+│  ├── Tạo và chia sẻ khóa học của mình                           │
+│  ├── Theo dõi tiến độ học tập                                   │
+│  └── Làm bài kiểm tra để đánh giá bản thân                      │
 │                                                                 │
-│  PAIN POINTS:                                                  │
-│  ├── Khó quản lý nhiều khóa học cùng lúc                       │
-│  ├── Không biết học viên đang ở đâu                            │
-│  ├── Tạo bài kiểm tra tốn nhiều thời gian                      │
-│  └── Trả lời câu hỏi lặp lại nhiều lần                         │
+│  PAIN POINTS:                                                   │
+│  ├── Không có người hướng dẫn khi gặp bài khó                   │
+│  ├── Không biết mình đang ở level nào                           │
+│  ├── Khó theo dõi tiến độ học                                   │
+│  ├── Tạo nội dung học tập tốn thời gian                         │
+│  └── Không có công cụ quiz tự động                              │
 │                                                                 │
-│  USER STORIES:                                                 │
-│  ├── Tôi muốn tạo khóa học mới                                 │
-│  ├── Tôi muốn thêm bài học vào khóa                            │
-│  ├── Tôi muốn tạo quiz cho bài học                             │
-│  ├── Tôi muốn upload tài liệu                                  │
-│  ├── Tôi muốn xem danh sách học viên                           │
-│  ├── Tôi muốn xem tiến độ của từng học viên                    │
-│  ├── Tôi muốn chỉnh sửa nội dung khóa học                      │
-│  └── Tôi muốn xóa khóa học                                     │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Persona 3: Admin (Quản Trị Viên)
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         ADMIN PERSONA                           │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Name: Lê Văn C (Admin)                                        │
-│  Device: Desktop (100%)                                        │
-│                                                                 │
-│  NEEDS:                                                        │
-│  ├── Quản lý users (student, teacher)                          │
-│  ├── Quản lý khóa học trên hệ thống                            │
-│  ├── Xem thống kê hệ thống                                     │
-│  └── Kiểm soát nội dung                                        │
-│                                                                 │
-│  PAIN POINTS:                                                  │
-│  ├── Khó theo dõi hoạt động hệ thống                           │
-│  ├── Xử lý vi phạm tốn thời gian                               │
-│  ├── Thiếu dashboard thống kê                                  │
-│  └── Không có công cụ moderation                               │
-│                                                                 │
-│  USER STORIES:                                                 │
-│  ├── Tôi muốn xem danh sách tất cả users                       │
-│  ├── Tôi muốn khóa/mở khóa user                                │
-│  ├── Tôi muốn xem danh sách khóa học                           │
-│  ├── Tôi muốn xóa khóa học vi phạm                             │
-│  ├── Tôi muốn xem thống kê hệ thống                            │
-│  ├── Tôi muốn xem activity logs                                │
-│  └── Tôi muốn quản lý roles của user                           │
+│  USER STORIES:                                                  │
+│  │                                                              │
+│  │  AUTHENTICATION:                                             │
+│  ├── Tôi muốn đăng ký tài khoản                                 │
+│  ├── Tôi muốn đăng nhập                                         │
+│  └── Tôi muốn cập nhật profile                                  │
+│  │                                                              │
+│  │  COURSES:                                                    │
+│  ├── Tôi muốn xem danh sách khóa học                            │
+│  ├── Tôi muốn tạo khóa học mới                                  │
+│  ├── Tôi muốn xem chi tiết khóa học                             │
+│  ├── Tôi muốn chỉnh sửa khóa học của mình                       │
+│  └── Tôi muốn xóa khóa học của mình                             │
+│  │                                                              │
+│  │  LESSONS:                                                    │
+│  ├── Tôi muốn xem danh sách bài học                             │
+│  ├── Tôi muốn xem chi tiết bài học                              │
+│  ├── Tôi muốn tạo bài học mới                                   │
+│  ├── Tôi muốn chỉnh sửa bài học                                 │
+│  └── Tôi muốn xóa bài học                                       │
+│  │                                                              │
+│  │  QUIZZES:                                                    │
+│  ├── Tôi muốn xem quiz của bài học                              │
+│  ├── Tôi muốn tạo quiz                                          │
+│  ├── Tôi muốn làm quiz                                          │
+│  ├── Tôi muốn xem kết quả quiz                                  │
+│  └── Tôi muốn xem lịch sử làm quiz                              │
+│  │                                                              │
+│  │  AI CHAT:                                                    │
+│  ├── Tôi muốn tạo conversation                                  │
+│  ├── Tôi muốn gửi tin nhắn cho AI                               │
+│  ├── Tôi muốn nhận phản hồi từ AI                               │
+│  └── Tôi muốn xem lịch sử chat                                  │
+│  │                                                              │
+│  │  PROGRESS:                                                   │
+│  ├── Tôi muốn xem tiến độ tổng quan                             │
+│  ├── Tôi muốn xem tiến độ theo khóa                             │
+│  └── Tôi muốn đánh dấu hoàn thành bài học                       │
+│  │                                                              │
+│  │  DOCUMENTS:                                                  │
+│  ├── Tôi muốn upload tài liệu                                   │
+│  ├── Tôi muốn xem danh sách tài liệu                            │
+│  └── Tôi muốn download tài liệu                                 │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔄 User Journey Maps
+## 🔄 User Journey Map
 
-### Student Journey
+### Learning Journey
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         STUDENT JOURNEY                                      │
+│                         USER LEARNING JOURNEY                                │
 └─────────────────────────────────────────────────────────────────────────────┘
 
   ONBOARDING        LEARNING         PRACTICING        TRACKING
@@ -170,28 +134,28 @@
   └───────┘       └───────┘         └───────┘
 ```
 
-### Teacher Journey
+### Creating Journey
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         TEACHER JOURNEY                                      │
+│                         USER CREATING JOURNEY                                │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-  ONBOARDING        CREATING         MANAGING         MONITORING
-      │                │                 │                 │
-      ▼                ▼                 ▼                 ▼
-  ┌───────┐       ┌───────┐         ┌───────┐        ┌───────┐
-  │ Đăng  │──────▶│ Tạo   │────────▶│ Thêm  │───────▶│ Xem   │
-  │ ký    │       │ khóa  │         │ quiz  │        │ tiến  │
-  │       │       │ học   │         │       │        │ độ    │
-  └───────┘       └───────┘         └───────┘        └───────┘
-                      │
-                      ▼
-                 ┌───────┐
-                 │ Thêm  │
-                 │ bài   │
-                 │ học   │
-                 └───────┘
+  CREATING         ADDING           QUIZ            MANAGING
+      │               │               │                │
+      ▼               ▼               ▼                ▼
+  ┌───────┐      ┌───────┐       ┌───────┐       ┌───────┐
+  │ Tạo   │─────▶│ Thêm  │──────▶│ Tạo   │──────▶│ Quản  │
+  │ khóa  │      │ bài   │       │ quiz  │       │ lý    │
+  │ học   │      │ học   │       │       │       │       │
+  └───────┘      └───────┘       └───────┘       └───────┘
+                                       │
+                                       ▼
+                                 ┌───────┐
+                                 │ Upload│
+                                 │ tài   │
+                                 │ liệu  │
+                                 └───────┘
 ```
 
 ---
@@ -215,21 +179,19 @@
   ├── Advanced quiz (multiple types)
   ├── Document upload
   ├── Course enrollment
-  ├── Activity logs
-  └── Email notifications
+  └── Activity logs
 
   COULD HAVE (P2) - Future
   ├── Certificate generation
   ├── Discussion forum
-  ├── Live streaming
-  ├── Mobile app
-  └── Multi-language support
+  ├── Multi-language support
+  └── Dark mode
 
-  WON'T HAVE (Phase 1)
-  ├── Payment integration
-  ├── Video conferencing
-  ├── Social features
-  └── Third-party integrations
+  ❌ WON'T HAVE
+  ├── Payment integration (miễn phí)
+  ├── Premium features (tất cả free)
+  ├── Role-based access (chỉ 1 role)
+  └── Subscription plans
 ```
 
 ---
@@ -240,14 +202,16 @@
 
 ```json
 {
+  "id": 1,
   "title": "Python cơ bản",
   "description": "Học Python từ con số 0",
-  "thumbnail": "url_to_image",
-  "teacher_id": 1,
-  "is_published": true,
+  "thumbnail": "https://example.com/images/python.jpg",
+  "creator_id": 1,
   "category": "programming",
   "level": "beginner",
-  "duration_hours": 20
+  "duration_hours": 20,
+  "is_published": true,
+  "created_at": "2026-02-27T10:00:00Z"
 }
 ```
 
@@ -255,12 +219,14 @@
 
 ```json
 {
+  "id": 1,
   "course_id": 1,
   "title": "Biến và kiểu dữ liệu",
   "content": "Nội dung bài học...",
-  "video_url": "url_to_video",
+  "video_url": "https://youtube.com/watch?v=xxx",
   "order": 1,
-  "duration_minutes": 30
+  "duration_minutes": 30,
+  "created_at": "2026-02-27T10:00:00Z"
 }
 ```
 
@@ -275,4 +241,88 @@
 
 ---
 
-*Tài liệu này định nghĩa rõ ràng ai là users và họ cần gì từ hệ thống.*
+## 📝 User Stories Summary
+
+### Authentication
+| ID | Story | Priority |
+|----|-------|----------|
+| AUTH-01 | Đăng ký tài khoản | P0 |
+| AUTH-02 | Đăng nhập | P0 |
+| AUTH-03 | Cập nhật profile | P1 |
+| AUTH-04 | Đổi mật khẩu | P1 |
+
+### Course
+| ID | Story | Priority |
+|----|-------|----------|
+| CRS-01 | Xem danh sách khóa học | P0 |
+| CRS-02 | Xem chi tiết khóa học | P0 |
+| CRS-03 | Tạo khóa học mới | P0 |
+| CRS-04 | Cập nhật khóa học của mình | P0 |
+| CRS-05 | Xóa khóa học của mình | P0 |
+| CRS-06 | Đăng ký khóa học | P1 |
+
+### Lesson
+| ID | Story | Priority |
+|----|-------|----------|
+| LES-01 | Xem danh sách bài học | P0 |
+| LES-02 | Xem chi tiết bài học | P0 |
+| LES-03 | Tạo bài học mới | P0 |
+| LES-04 | Cập nhật bài học | P0 |
+| LES-05 | Xóa bài học | P0 |
+
+### Quiz
+| ID | Story | Priority |
+|----|-------|----------|
+| QIZ-01 | Xem quiz của bài học | P0 |
+| QIZ-02 | Tạo quiz | P0 |
+| QIZ-03 | Làm quiz | P0 |
+| QIZ-04 | Xem kết quả | P0 |
+| QIZ-05 | Xem lịch sử làm quiz | P1 |
+
+### AI Chat
+| ID | Story | Priority |
+|----|-------|----------|
+| CHAT-01 | Tạo conversation | P0 |
+| CHAT-02 | Gửi tin nhắn | P0 |
+| CHAT-03 | Nhận AI response | P0 |
+| CHAT-04 | Xem lịch sử chat | P1 |
+
+### Progress
+| ID | Story | Priority |
+|----|-------|----------|
+| PRG-01 | Xem tiến độ tổng quan | P0 |
+| PRG-02 | Xem tiến độ theo khóa | P0 |
+| PRG-03 | Đánh dấu hoàn thành | P0 |
+
+### Document
+| ID | Story | Priority |
+|----|-------|----------|
+| DOC-01 | Upload tài liệu | P1 |
+| DOC-02 | Xem danh sách tài liệu | P1 |
+| DOC-03 | Download tài liệu | P1 |
+| DOC-04 | Xóa tài liệu | P1 |
+
+---
+
+## 🔐 Access Control (Ownership-Based)
+
+| Resource | Public | Creator Only |
+|----------|--------|--------------|
+| Course list | ✅ | - |
+| Course detail | ✅ | - |
+| Create course | - | ✅ (any user) |
+| Update course | - | ✅ (creator) |
+| Delete course | - | ✅ (creator) |
+| Lesson list | ✅ | - |
+| Create lesson | - | ✅ (course creator) |
+| Update lesson | - | ✅ (course creator) |
+| Delete lesson | - | ✅ (course creator) |
+| Quiz | ✅ (enrolled) | - |
+| Create quiz | - | ✅ (course creator) |
+| Progress | - | ✅ (owner) |
+| Chat history | - | ✅ (owner) |
+
+---
+
+*Tài liệu này định nghĩa rõ ràng user cần gì từ hệ thống.*
+*Version: 1.1 - Single role (user), no payment*
