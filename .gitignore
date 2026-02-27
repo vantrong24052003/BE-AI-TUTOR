@@ -64,6 +64,3 @@ Thumbs.db
 *.log
 logs/
 
-# Claude & Agent configs (local only)
-.agent/
-.claude/

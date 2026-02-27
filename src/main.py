@@ -1,16 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.v1.router import api_router
+from src.controllers import health_controller
 from src.core.config import settings
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    openapi_url="/api/openapi.json",
 )
 
-# Set all CORS enabled origins
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -19,9 +19,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api_router, prefix=settings.API_V1_STR)
+# Include routers (Controllers)
+app.include_router(health_controller.router, tags=["Health"])
 
 
-@app.get("/health")
-def health_check():
+@app.get("/")
+def root():
     return {"status": "healthy", "version": settings.VERSION}

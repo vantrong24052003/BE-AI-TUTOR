@@ -4,7 +4,6 @@ from typing import List
 
 class Settings(BaseSettings):
     # API
-    API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "BE AI TUTOR"
     VERSION: str = "1.0.0"
 
