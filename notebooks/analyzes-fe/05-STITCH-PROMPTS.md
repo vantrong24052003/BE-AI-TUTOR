@@ -18,7 +18,7 @@ Dark: #0F172A (Deep Navy) - text, headers
 Light: #F8FAFC (Off-White) - backgrounds
 Card: #FFFFFF (Pure White) - cards, elevated surfaces
 Muted: #64748B (Slate Gray) - secondary text, placeholders
-Border: #E2E8F0 (Light Gray) - subtle borders
+Border: #E2E8F0 (Light Gray) - subtle borders 
 
 Backgrounds: Clean white/light gray with subtle texture or very light geometric patterns
 NO neon gradients, NO purple-pink-blue AI art style, NO dark mode as default
