@@ -7,10 +7,11 @@
 ## 1. TỔNG QUAN
 
 ### Mô tả
-Hệ thống flashcard với thuật toán SM-2 (SuperMemo) để tối ưu hóa việc ghi nhớ.
+Hệ thống flashcard với thuật toán SM-2 (SuperMemo) để tối ưu hóa việc ghi nhớ. Flashcard được tạo từ tài liệu người dùng upload.
 
 ### Business Rules
-- Flashcard thuộc về một Lesson
+- Flashcard thuộc về một Document (tài liệu)
+- Flashcard có thể được tạo thủ công hoặc tự động bằng AI từ tài liệu
 - Mỗi user có review state riêng cho mỗi flashcard
 - SM-2 algorithm quyết định khi nào review lại
 - Review quality từ 0-5 (0=quên hoàn toàn, 5=dễ nhớ)
@@ -65,21 +66,22 @@ ease_factor = max(MIN_EASE_FACTOR, ease_factor)
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | integer | Primary key |
-| lesson_id | integer | FK → lessons |
+| id | string (UUID) | Primary key |
+| document_id | string (UUID) | FK → documents |
 | front | text | Mặt trước (câu hỏi) |
 | back | text | Mặt sau (đáp án) |
 | hint | text | Gợi ý (nullable) |
 | order | integer | Thứ tự |
+| is_ai_generated | boolean | Được tạo bởi AI |
 | created_at | timestamp | Thời gian tạo |
 
 ### Flashcard Review Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | integer | Primary key |
-| user_id | integer | FK → users |
-| flashcard_id | integer | FK → flashcards |
+| id | string (UUID) | Primary key |
+| user_id | string (UUID) | FK → users |
+| flashcard_id | string (UUID) | FK → flashcards |
 | quality | integer | Đánh giá 0-5 |
 | ease_factor | decimal | Hệ số dễ (default: 2.5) |
 | interval | integer | Khoảng cách (ngày) |
@@ -92,9 +94,9 @@ ease_factor = max(MIN_EASE_FACTOR, ease_factor)
 
 ## 4. API ENDPOINTS
 
-### 4.1 Get Flashcards by Lesson
+### 4.1 Get Flashcards by Document
 
-**Endpoint**: `GET /api/v1/lessons/:lesson_id/flashcards`
+**Endpoint**: `GET /api/v1/documents/:document_id/flashcards`
 
 **Headers**: `Authorization: Bearer <token>`
 
@@ -103,12 +105,13 @@ ease_factor = max(MIN_EASE_FACTOR, ease_factor)
 {
   "flashcards": [
     {
-      "id": 1,
-      "lesson_id": 1,
-      "front": "print('Hello')",
-      "back": "In ra màn hình: Hello",
-      "hint": "Hàm in trong Python",
+      "id": "uuid-fc-1",
+      "document_id": "uuid-doc-123",
+      "front": "What is Python?",
+      "back": "Python is a high-level programming language",
+      "hint": "Created by Guido van Rossum",
       "order": 1,
+      "is_ai_generated": true,
       "review_state": {
         "quality": 4,
         "ease_factor": 2.5,
@@ -139,6 +142,7 @@ ease_factor = max(MIN_EASE_FACTOR, ease_factor)
 | Param | Type | Description |
 |-------|------|-------------|
 | limit | int | Max cards to return (default: 20) |
+| document_id | int | Filter by document (optional) |
 
 **Success Response** (200):
 ```json
@@ -146,17 +150,13 @@ ease_factor = max(MIN_EASE_FACTOR, ease_factor)
   "flashcards": [
     {
       "id": 1,
-      "lesson_id": 1,
-      "front": "print('Hello')",
-      "back": "In ra màn hình: Hello",
-      "hint": "Hàm in trong Python",
-      "lesson": {
+      "document_id": 1,
+      "front": "What is Python?",
+      "back": "Python is a high-level programming language",
+      "hint": "Created by Guido van Rossum",
+      "document": {
         "id": 1,
-        "title": "Giới thiệu Python",
-        "course": {
-          "id": 1,
-          "title": "Python cơ bản"
-        }
+        "title": "Python Tutorial"
       }
     }
   ],
@@ -216,7 +216,7 @@ ease_factor = max(MIN_EASE_FACTOR, ease_factor)
 **Query Parameters**:
 | Param | Type | Description |
 |-------|------|-------------|
-| lesson_id | int | Filter by lesson (optional) |
+| document_id | int | Filter by document (optional) |
 | period | string | day/week/month (default: week) |
 
 **Success Response** (200):
@@ -267,18 +267,18 @@ ease_factor = max(MIN_EASE_FACTOR, ease_factor)
 
 ### 4.6 Create Flashcard
 
-**Endpoint**: `POST /api/v1/lessons/:lesson_id/flashcards`
+**Endpoint**: `POST /api/v1/documents/:document_id/flashcards`
 
 **Headers**: `Authorization: Bearer <token>`
 
-**Authorization**: Course creator only
+**Authorization**: Document owner only
 
 **Request Body**:
 ```json
 {
-  "front": "print('Hello')",
-  "back": "In ra màn hình: Hello",
-  "hint": "Hàm in trong Python"
+  "front": "What is Python?",
+  "back": "Python is a high-level programming language",
+  "hint": "Created by Guido van Rossum"
 }
 ```
 
@@ -301,7 +301,7 @@ ease_factor = max(MIN_EASE_FACTOR, ease_factor)
 **Request Body**:
 ```json
 {
-  "lesson_id": 1,
+  "document_id": 1,
   "num_cards": 10
 }
 ```
@@ -312,9 +312,9 @@ ease_factor = max(MIN_EASE_FACTOR, ease_factor)
   "generation_id": 1,
   "flashcards": [
     {
-      "front": "Câu hỏi...",
-      "back": "Câu trả lời...",
-      "hint": "Gợi ý..."
+      "front": "What is Python?",
+      "back": "Python is a high-level programming language",
+      "hint": "Created by Guido van Rossum"
     }
   ],
   "tokens_used": 1200
@@ -463,12 +463,12 @@ async def review_flashcard(
 
 @router.get("/progress")
 async def get_progress(
-    lesson_id: int = None,
+    document_id: int = None,
     period: str = Query("week", regex="^(day|week|month)$"),
     current_user = Depends(get_current_user),
     flashcard_service: FlashcardService = Depends()
 ):
-    return await flashcard_service.get_progress(current_user.id, lesson_id, period)
+    return await flashcard_service.get_progress(current_user.id, document_id, period)
 ```
 
 ---
@@ -479,11 +479,12 @@ async def get_progress(
 -- flashcards table
 CREATE TABLE flashcards (
     id SERIAL PRIMARY KEY,
-    lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+    document_id INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
     front TEXT NOT NULL,
     back TEXT NOT NULL,
     hint TEXT,
     "order" INTEGER NOT NULL DEFAULT 0,
+    is_ai_generated BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -503,7 +504,7 @@ CREATE TABLE flashcard_reviews (
 );
 
 -- Indexes
-CREATE INDEX idx_flashcards_lesson ON flashcards(lesson_id);
+CREATE INDEX idx_flashcards_document ON flashcards(document_id);
 CREATE INDEX idx_reviews_user_flashcard ON flashcard_reviews(user_id, flashcard_id);
 CREATE INDEX idx_reviews_next_review ON flashcard_reviews(user_id, next_review_at)
     WHERE next_review_at IS NOT NULL;

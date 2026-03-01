@@ -1,14 +1,14 @@
 # BE AI TUTOR - Business Model & User Personas
 
-> Định nghĩa business model và user stories
+> Định nghĩa business model và user stories cho hệ thống Document-RAG based AI Tutor
 
 ---
 
 ## 🎯 Business Model
 
 ### Value Proposition
-- **Cho User**: Học tập mọi lúc mọi nơi, được AI hỗ trợ 24/7, tạo và chia sẻ khóa học, theo dõi tiến độ
-- **Điểm khác biệt**: AI Tutor context-aware, miễn phí hoàn toàn
+- **Cho User**: Upload tài liệu → AI tự động tạo Flashcard/Quiz/Summary → Học tập hiệu quả với Spaced Repetition
+- **Điểm khác biệt**: RAG-based AI Tutor hiểu nội dung tài liệu, chat context-aware, miễn phí hoàn toàn
 
 ### Revenue Model
 ```
@@ -24,7 +24,7 @@
 │                                                                 │
 │  ✅ MỤC TIÊU                                                    │
 │  ├── Giáo dục miễn phí cho mọi người                            │
-│  ├── Xây dựng cộng đồng học tập                                 │
+│  ├── AI hỗ trợ học tập 24/7                                     │
 │  └── Lan tỏa kiến thức                                          │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -50,97 +50,81 @@ Hệ thống có **2 roles**: `admin` và `user` (mặc định).
 │  Device: Mobile (60%), Desktop (40%)                            │
 │                                                                 │
 │  PERMISSIONS:                                                   │
-│  ├── Xem và tạo khóa học                                        │
-│  ├── Xem và tạo bài học (trong course do mình tạo)              │
-│  ├── Xem và tạo quiz (trong course do mình tạo)                 │
-│  ├── Làm quiz và xem kết quả (nếu enrolled)                     │
-│  ├── Chat với AI                                                │
-│  ├── Xem tiến độ học tập của mình                               │
-│  └── Upload tài liệu                                            │
+│  ├── Upload tài liệu (PDF/DOCX)                                 │
+│  ├── Xem và quản lý tài liệu của mình                           │
+│  ├── Tạo và ôn tập Flashcard (Spaced Repetition)                │
+│  ├── Làm Quiz từ tài liệu                                       │
+│  ├── Chat với AI về nội dung tài liệu                           │
+│  ├── Tạo ghi chú cá nhân                                        │
+│  ├── Bookmark tài liệu quan trọng                               │
+│  ├── Sinh lộ trình học tập (Learning Path)                      │
+│  ├── Giải bài tập chi tiết (Homework Solver)                    │
+│  └── Xem tiến độ học tập                                        │
 │                                                                 │
 │  NEEDS:                                                         │
-│  ├── Học tập linh hoạt, mọi lúc mọi nơi                         │
-│  ├── Được hỗ trợ khi gặp khó khăn (AI Tutor)                    │
-│  ├── Tạo và chia sẻ khóa học của mình                           │
-│  ├── Theo dõi tiến độ học tập                                   │
-│  └── Làm bài kiểm tra để đánh giá bản thân                      │
+│  ├── Upload tài liệu học tập (PDF, DOCX)                        │
+│  ├── AI tự động tạo Flashcard/Quiz từ tài liệu                  │
+│  ├── Ôn tập hiệu quả với Spaced Repetition                      │
+│  ├── Hỏi đáp với AI về nội dung tài liệu                        │
+│  ├── Tóm tắt nội dung tài liệu dài                              │
+│  ├── Sinh lộ trình học có cấu trúc (Stages/Lessons)             │
+│  ├── Giải bài tập khó theo từng bước (CoT)                      │
+│  ├── Sinh đề kiểm tra theo ma trận kiến thức                    │
+│  └── Theo dõi tiến độ học tập                                   │
 │                                                                 │
 │  PAIN POINTS:                                                   │
-│  ├── Không có người hướng dẫn khi gặp bài khó                   │
-│  ├── Không biết mình đang ở level nào                           │
-│  ├── Khó theo dõi tiến độ học                                   │
-│  ├── Tạo nội dung học tập tốn thời gian                         │
-│  └── Không có công cụ quiz tự động                              │
+│  ├── Đọc tài liệu dài mất nhiều thời gian                       │
+│  ├── Không có công cụ tạo flashcard tự động                     │
+│  ├── Không biết khi nào cần ôn tập lại                          │
+│  ├── Không có người hướng dẫn khi gặp khái niệm khó             │
+│  └── Khó theo dõi tiến độ học tập                               │
 │                                                                 │
 │  USER STORIES:                                                  │
 │  │                                                              │
-│  │  AUTHENTICATION:                                             │
-│  ├── Tôi muốn đăng ký tài khoản                                 │
-│  ├── Tôi muốn đăng nhập                                         │
-│  ├── Tôi muốn đổi mật khẩu                                      │
-│  └── Tôi muốn cập nhật profile                                  │
-│  │                                                              │
-│  │  COURSES:                                                    │
-│  ├── Tôi muốn xem danh sách khóa học                            │
-│  ├── Tôi muốn tạo khóa học mới                                  │
-│  ├── Tôi muốn xem chi tiết khóa học                             │
-│  ├── Tôi muốn chỉnh sửa khóa học của mình                       │
-│  ├── Tôi muốn xóa khóa học của mình                             │
-│  └── Tôi muốn đăng ký khóa học                                  │
-│  │                                                              │
-│  │  LESSONS:                                                    │
-│  ├── Tôi muốn xem danh sách bài học                             │
-│  ├── Tôi muốn xem chi tiết bài học                              │
-│  ├── Tôi muốn tạo bài học mới                                   │
-│  ├── Tôi muốn chỉnh sửa bài học                                 │
-│  └── Tôi muốn xóa bài học                                       │
-│  │                                                              │
-│  │  QUIZZES:                                                    │
-│  ├── Tôi muốn xem quiz của bài học                              │
-│  ├── Tôi muốn tạo quiz                                          │
-│  ├── Tôi muốn làm quiz                                          │
-│  ├── Tôi muốn xem kết quả quiz                                  │
-│  └── Tôi muốn xem lịch sử làm quiz                              │
-│  │                                                              │
-│  │  AI CHAT:                                                    │
-│  ├── Tôi muốn tạo conversation                                  │
-│  ├── Tôi muốn gửi tin nhắn cho AI                               │
-│  ├── Tôi muốn nhận phản hồi từ AI                               │
-│  └── Tôi muốn xem lịch sử chat                                  │
-│  │                                                              │
-│  │  PROGRESS:                                                   │
-│  ├── Tôi muốn xem tiến độ tổng quan                             │
-│  ├── Tôi muốn xem tiến độ theo khóa                             │
-│  └── Tôi muốn đánh dấu hoàn thành bài học                       │
-│  │                                                              │
 │  │  DOCUMENTS:                                                  │
-│  ├── Tôi muốn upload tài liệu                                   │
-│  ├── Tôi muốn xem danh sách tài liệu                            │
-│  └── Tôi muốn download tài liệu                                 │
+│  ├── Tôi muốn upload tài liệu PDF/DOCX                           │
+│  ├── Tôi muốn xem danh sách tài liệu của mình                    │
+│  ├── Tôi muốn xem chi tiết tài liệu                              │
+│  ├── Tôi muốn xóa tài liệu không cần                             │
+│  └── Tôi muốn tải xuống tài liệu đã upload                       │
 │  │                                                              │
 │  │  FLASHCARDS:                                                 │
-│  ├── Tôi muốn xem flashcard của bài học                         │
-│  ├── Tôi muốn review flashcard (học theo spaced repetition)     │
-│  ├── Tôi muốn xem flashcard cần review hôm nay                  │
-│  └── Tôi muốn xem tiến độ học flashcard                         │
+│  ├── Tôi muốn AI tự động tạo flashcard từ tài liệu               │
+│  ├── Tôi muốn xem flashcard cần ôn tập hôm nay                   │
+│  ├── Tôi muốn ôn tập flashcard (flip card, rate)                 │
+│  ├── Tôi muốn xem tiến độ học flashcard                          │
+│  └── Tôi muốn tạo flashcard thủ công                             │
 │  │                                                              │
-│  │  EXERCISES:                                                  │
-│  ├── Tôi muốn xem bài tập của bài học                           │
-│  ├── Tôi muốn nộp bài tập                                       │
-│  ├── Tôi muốn xem feedback từ AI                                │
-│  └── Tôi muốn xem lịch sử nộp bài                               │
+│  │  QUIZ:                                                       │
+│  ├── Tôi muốn AI tự động tạo quiz từ tài liệu                    │
+│  ├── Tôi muốn làm quiz                                           │
+│  ├── Tôi muốn xem kết quả quiz                                   │
+│  ├── Tôi muốn xem lịch sử làm quiz                               │
+│  └── Tôi muốn xem giải thích đáp án                              │
 │  │                                                              │
-│  │  NOTES & BOOKMARKS:                                          │
-│  ├── Tôi muốn tạo ghi chú cá nhân                               │
-│  ├── Tôi muốn đánh dấu bookmark bài học quan trọng              │
-│  └── Tôi muốn xem lại các bookmark của tôi                      │
+│  │  AI CHAT:                                                    │
+│  ├── Tôi muốn chat với AI về nội dung tài liệu                   │
+│  ├── Tôi muốn AI trả lời dựa trên ngữ cảnh tài liệu              │
+│  ├── Tôi muốn xem lịch sử chat                                   │
+│  └── Tôi muốn tạo phiên chat mới                                 │
 │  │                                                              │
 │  │  AI SERVICES:                                                │
-│  ├── Tôi muốn AI tạo quiz từ nội dung bài học                   │
-│  ├── Tôi muốn AI tóm tắt nội dung                               │
-│  ├── Tôi muốn AI gợi ý giải bài tập                             │
-│  ├── Tôi muốn AI chấm điểm bài nộp                              │
-│  └── Tôi muốn AI tạo flashcard tự động                          │
+│  ├── Tôi muốn AI tóm tắt tài liệu                                │
+│  ├── Tôi muốn AI giải thích khái niệm khó                        │
+│  ├── Tôi muốn AI sinh lộ trình học từ tài liệu                    │
+│  ├── Tôi muốn AI giải bài tập chi tiết từng bước                 │
+│  └── Tôi muốn AI sinh đề kiểm tra theo ma trận                   │
+│  │                                                              │
+│  │  NOTES & BOOKMARKS:                                          │
+│  ├── Tôi muốn tạo ghi chú cá nhân trong tài liệu                 │
+│  ├── Tôi muốn đánh dấu bookmark vị trí quan trọng                │
+│  └── Tôi muốn xem lại các bookmark của tôi                       │
+│  │                                                              │
+│  │  PROGRESS:                                                   │
+│  ├── Tôi muốn xem tiến độ học tập tổng quan                      │
+│  ├── Tôi muốn đánh dấu hoàn thành bài học trong lộ trình         │
+│  ├── Tôi muốn xem thống kê flashcard                             │
+│  └── Tôi muốn xem lịch sử hoạt động                              │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -158,15 +142,15 @@ Hệ thống có **2 roles**: `admin` và `user` (mặc định).
 │  PERMISSIONS (Toàn quyền):                                      │
 │  ├── Tất cả quyền của User                                      │
 │  ├── Quản lý tất cả users (CRUD)                                │
-│  ├── Quản lý tất cả courses                                     │
-│  ├── Quản lý categories (CRUD)                                  │
-│  └── Xem tất cả progress                                        │
+│  ├── Quản lý tất cả documents                                   │
+│  ├── Xem thống kê hệ thống                                      │
+│  └── Kiểm soát AI usage                                         │
 │                                                                 │
 │  ADMIN TASKS:                                                   │
-│  ├── Tạo/sửa/xóa categories                                     │
-│  ├── Duyệt/xóa courses không phù hợp                            │
 │  ├── Quản lý users (khóa, xóa)                                  │
-│  └── Xem thống kê hệ thống                                      │
+│  ├── Xem và xóa documents không phù hợp                         │
+│  ├── Xem thống kê sử dụng AI                                    │
+│  └── Giám sát hoạt động hệ thống                                │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -175,52 +159,50 @@ Hệ thống có **2 roles**: `admin` và `user` (mặc định).
 
 ## 🔄 User Journey Map
 
-### Learning Journey
+### Learning Journey (Document-Based)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                         USER LEARNING JOURNEY                                │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-  ONBOARDING        LEARNING         PRACTICING        TRACKING
+  ONBOARDING        UPLOAD           LEARNING         PRACTICING        TRACKING
+      │                │                 │                 │                 │
+      ▼                ▼                 ▼                 ▼                 ▼
+  ┌───────┐       ┌───────┐        ┌───────┐        ┌───────┐        ┌───────┐
+  │ Đăng  │──────▶│ Upload│───────▶│ AI    │───────▶│ Ôn    │───────▶│ Xem   │
+  │ ký    │       │ PDF/  │        │ Tạo   │        │ tập   │        │ tiến  │
+  │       │       │ DOCX  │        │ FC/Quiz│        │ SRS   │        │ độ    │
+  └───────┘       └───────┘        └───────┘        └───────┘        └───────┘
       │                │                 │                 │
       ▼                ▼                 ▼                 ▼
-  ┌───────┐       ┌───────┐         ┌───────┐        ┌───────┐
-  │ Đăng  │──────▶│ Xem   │────────▶│ Làm   │───────▶│ Xem   │
-  │ ký    │       │ bài   │         │ quiz  │        │ tiến  │
-  │       │       │ học   │         │       │        │ độ    │
-  └───────┘       └───────┘         └───────┘        └───────┘
-      │                │                 │
-      ▼                ▼                 ▼
-  ┌───────┐       ┌───────┐         ┌───────┐
-  │ Chọn  │       │ Chat  │         │ Xem   │
-  │ khóa  │       │ với   │         │ kết   │
-  │ học   │       │ AI    │         │ quả   │
-  └───────┘       └───────┘         └───────┘
+  ┌───────┐       ┌───────┐        ┌───────┐        ┌───────┐
+  │ Chọn  │       │ Xem   │        │ Chat  │        │ Làm   │
+  │ plan  │       │ tóm   │        │ với   │        │ Quiz  │
+  │ học   │       │ tắt   │        │ AI    │        │       │
+  └───────┘       └───────┘        └───────┘        └───────┘
 ```
 
-### Creating Journey
+### Document Processing Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         USER CREATING JOURNEY                                │
+│                      DOCUMENT PROCESSING FLOW                                │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-  CREATING         ADDING           QUIZ            MANAGING
-      │               │               │                │
-      ▼               ▼               ▼                ▼
-  ┌───────┐      ┌───────┐       ┌───────┐       ┌───────┐
-  │ Tạo   │─────▶│ Thêm  │──────▶│ Tạo   │──────▶│ Quản  │
-  │ khóa  │      │ bài   │       │ quiz  │       │ lý    │
-  │ học   │      │ học   │       │       │       │       │
-  └───────┘      └───────┘       └───────┘       └───────┘
-                                       │
-                                       ▼
-                                 ┌───────┐
-                                 │ Upload│
-                                 │ tài   │
-                                 │ liệu  │
-                                 └───────┘
+  UPLOAD         PROCESSING          AI GENERATION          READY
+      │               │                    │                   │
+      ▼               ▼                    ▼                   ▼
+  ┌───────┐     ┌───────────┐      ┌───────────┐        ┌───────┐
+  │ Select │────▶│ Extract   │────▶│ Generate  │───────▶│ Study │
+  │ File   │     │ Text      │      │ FC/Quiz   │        │ Mode  │
+  └───────┘     └───────────┘      └───────────┘        └───────┘
+                     │                    │
+                     ▼                    ▼
+                ┌───────────┐      ┌───────────┐
+                │ Chunk &   │      │ Store in  │
+                │ Embed     │      │ RAG       │
+                └───────────┘      └───────────┘
 ```
 
 ---
@@ -234,85 +216,116 @@ Hệ thống có **2 roles**: `admin` và `user` (mặc định).
 
   MUST HAVE (P0) - MVP
   ├── User authentication (JWT)
-  ├── Course CRUD
-  ├── Lesson CRUD
-  ├── Quiz system (basic)
-  ├── AI Chat (basic)
-  ├── Progress tracking (basic)
-  ├── Flashcard với Spaced Repetition
-  └── Exercise system (submit + AI feedback)
+  ├── Document upload & management
+  ├── Sinh lộ trình học tập (Learning Path)
+  ├── Flashcard với Spaced Repetition (SM-2)
+  ├── Quiz system (AI-matrix-generated)
+  ├── Giải bài tập (Homework Solver)
+  ├── AI Chat với RAG (context-aware)
+  └── Progress tracking
 
   SHOULD HAVE (P1) - Post-MVP
-  ├── Advanced quiz (multiple types)
-  ├── Document upload
-  ├── Course enrollment
-  ├── Activity logs
-  ├── Admin management (categories, users)
+  ├── AI Summary generation
   ├── Notes cá nhân
   ├── Bookmarks
-  ├── AI Generate Quiz
-  ├── AI Summarize
-  ├── AI Grade Submission
-  └── AI Solve Exercise hints
+  ├── Document viewer
+  ├── Multiple file formats (DOCX, TXT)
+  └── Chat history management
 
   COULD HAVE (P2) - Future
-  ├── AI Generate Flashcards
-  ├── Certificate generation
-  ├── Discussion forum
+  ├── Sharing documents
+  ├── Public document library
+  ├── Advanced analytics
+  ├── Export flashcards (Anki format)
   ├── Multi-language support
-  ├── Dark mode
-  └── Leaderboard
+  └── Dark mode
 
   ❌ WON'T HAVE
   ├── Payment integration (miễn phí)
   ├── Premium features (tất cả free)
-  └── Subscription plans
+  ├── Course/Lesson structure (Document-based)
+  └── Social features (forum, comments)
 ```
 
 ---
 
-## 🎓 Course & Learning Structure
+## 📝 Document Types Supported
 
-### Course Attributes
+### File Types
 
-```json
-{
-  "id": 1,
-  "title": "Python cơ bản",
-  "description": "Học Python từ con số 0",
-  "thumbnail": "https://example.com/images/python.jpg",
-  "creator_id": 1,
-  "category": "programming",
-  "level": "beginner",
-  "duration_hours": 20,
-  "is_published": true,
-  "created_at": "2026-02-27T10:00:00Z"
-}
-```
+| Type | Extension | Processing | Support |
+|------|-----------|------------|---------|
+| PDF | `.pdf` | PyPDF, pdfplumber | ✅ Full |
+| Word | `.docx` | python-docx | ✅ Full |
+| Text | `.txt` | Native | ✅ Full |
+| Markdown | `.md` | Native | ✅ Full |
+| PowerPoint | `.pptx` | python-pptx | 🔜 P2 |
 
-### Lesson Attributes
+### Document Attributes
 
 ```json
 {
   "id": 1,
-  "course_id": 1,
-  "title": "Biến và kiểu dữ liệu",
-  "content": "Nội dung bài học...",
-  "video_url": "https://youtube.com/watch?v=xxx",
-  "order": 1,
-  "duration_minutes": 30,
-  "created_at": "2026-02-27T10:00:00Z"
+  "title": "Machine Learning Basics",
+  "description": "Introduction to ML concepts",
+  "type": "pdf",
+  "status": "ready",
+  "file_size": 2500000,
+  "page_count": 45,
+  "thumbnail_url": "https://.../thumb.png",
+  "file_url": "https://.../document.pdf",
+  "summary": "AI-generated summary...",
+  "tags": ["machine-learning", "ai", "basics"],
+  "user_id": 1,
+  "created_at": "2026-03-01T10:00:00Z"
 }
 ```
 
-### Quiz Question Types
+---
 
-| Type | Mô tả |
-|------|-------|
-| `single_choice` | Chọn 1 đáp án đúng |
-| `multiple_choice` | Chọn nhiều đáp án đúng |
-| `true_false` | Đúng/Sai |
-| `fill_blank` | Điền vào chỗ trống |
+## 🎴 Flashcard System (Spaced Repetition)
+
+### SM-2 Algorithm
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    SPACED REPETITION SYSTEM                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Rating Options:                                                 │
+│  ├── Again (0) → Quên hoàn toàn → Review lại sau 1 phút        │
+│  ├── Hard (3) → Nhớ khó khăn → Review sau 10 phút              │
+│  ├── Good (4) → Nhớ tốt → Review sau 1 ngày                     │
+│  └── Easy (5) → Nhớ rất tốt → Review sau 4 ngày                │
+│                                                                  │
+│  Interval Calculation:                                           │
+│  ├── IF rating < 3 → Reset: interval = 1, repetitions = 0      │
+│  ├── IF repetitions = 0 → interval = 1                          │
+│  ├── IF repetitions = 1 → interval = 6                          │
+│  └── ELSE → interval = interval × ease_factor                   │
+│                                                                  │
+│  Ease Factor:                                                    │
+│  └── EF = EF + (0.1 - (5 - quality) × (0.08 + (5 - quality) × 0.02))│
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Flashcard Data
+
+```json
+{
+  "id": 1,
+  "document_id": 1,
+  "front": "What is overfitting in machine learning?",
+  "back": "Overfitting occurs when a model learns the training data too well...",
+  "hint": "Think about model complexity vs generalization",
+  "due_date": "2026-03-02T10:00:00Z",
+  "interval": 1,
+  "ease_factor": 2.5,
+  "repetitions": 0,
+  "created_at": "2026-03-01T10:00:00Z"
+}
+```
 
 ---
 
@@ -328,101 +341,72 @@ Hệ thống có **2 roles**: `admin` và `user` (mặc định).
 | AUTH-05 | Quên mật khẩu | P1 |
 | AUTH-06 | Đăng xuất | P0 |
 
-### Course
+### Documents
 | ID | Story | Priority |
 |----|-------|----------|
-| CRS-01 | Xem danh sách khóa học | P0 |
-| CRS-02 | Xem chi tiết khóa học | P0 |
-| CRS-03 | Tạo khóa học mới | P0 |
-| CRS-04 | Cập nhật khóa học của mình | P0 |
-| CRS-05 | Xóa khóa học của mình | P0 |
-| CRS-06 | Đăng ký khóa học | P1 |
+| DOC-01 | Upload tài liệu (PDF/DOCX) | P0 |
+| DOC-02 | Xem danh sách tài liệu | P0 |
+| DOC-03 | Xem chi tiết tài liệu | P0 |
+| DOC-04 | Xóa tài liệu | P0 |
+| DOC-05 | Tải xuống tài liệu | P1 |
+| DOC-06 | Xem trạng thái xử lý | P0 |
 
-### Lesson
+### Flashcards
 | ID | Story | Priority |
 |----|-------|----------|
-| LES-01 | Xem danh sách bài học | P0 |
-| LES-02 | Xem chi tiết bài học | P0 |
-| LES-03 | Tạo bài học mới | P0 |
-| LES-04 | Cập nhật bài học | P0 |
-| LES-05 | Xóa bài học | P0 |
+| FC-01 | AI tạo flashcard từ tài liệu | P0 |
+| FC-02 | Xem flashcard cần review hôm nay | P0 |
+| FC-03 | Review flashcard (flip, rate) | P0 |
+| FC-04 | Xem tiến độ học flashcard | P1 |
+| FC-05 | Tạo flashcard thủ công | P1 |
+| FC-06 | Xem tất cả flashcards | P1 |
+| FC-07 | Sửa/xóa flashcard | P1 |
 
 ### Quiz
 | ID | Story | Priority |
 |----|-------|----------|
-| QIZ-01 | Xem quiz của bài học | P0 |
-| QIZ-02 | Tạo quiz | P0 |
-| QIZ-03 | Làm quiz | P0 |
-| QIZ-04 | Xem kết quả | P0 |
-| QIZ-05 | Xem lịch sử làm quiz | P1 |
+| QZ-01 | AI tạo quiz từ tài liệu | P0 |
+| QZ-02 | Làm quiz | P0 |
+| QZ-03 | Xem kết quả quiz | P0 |
+| QZ-04 | Xem giải thích đáp án | P1 |
+| QZ-05 | Xem lịch sử làm quiz | P1 |
+| QZ-06 | Xóa quiz | P1 |
 
 ### AI Chat
 | ID | Story | Priority |
 |----|-------|----------|
-| CHAT-01 | Tạo conversation | P0 |
+| CHAT-01 | Tạo phiên chat mới | P0 |
 | CHAT-02 | Gửi tin nhắn | P0 |
-| CHAT-03 | Nhận AI response | P0 |
+| CHAT-03 | Nhận AI response (RAG-based) | P0 |
 | CHAT-04 | Xem lịch sử chat | P1 |
-
-### Progress
-| ID | Story | Priority |
-|----|-------|----------|
-| PRG-01 | Xem tiến độ tổng quan | P0 |
-| PRG-02 | Xem tiến độ theo khóa | P0 |
-| PRG-03 | Đánh dấu hoàn thành | P0 |
-
-### Document
-| ID | Story | Priority |
-|----|-------|----------|
-| DOC-01 | Upload tài liệu | P1 |
-| DOC-02 | Xem danh sách tài liệu | P1 |
-| DOC-03 | Download tài liệu | P1 |
-| DOC-04 | Xóa tài liệu | P1 |
-
-### Flashcard (Spaced Repetition)
-| ID | Story | Priority |
-|----|-------|----------|
-| FLA-01 | Xem flashcard của bài học | P0 |
-| FLA-02 | Review flashcard (học) | P0 |
-| FLA-03 | Xem flashcard cần review hôm nay | P0 |
-| FLA-04 | Xem tiến độ học flashcard | P1 |
-| FLA-05 | Tạo flashcard thủ công | P1 |
-
-### Exercise
-| ID | Story | Priority |
-|----|-------|----------|
-| EXE-01 | Xem danh sách bài tập | P0 |
-| EXE-02 | Nộp bài tập | P0 |
-| EXE-03 | Xem feedback AI | P0 |
-| EXE-04 | Xem lịch sử nộp bài | P1 |
-| EXE-05 | Tạo bài tập mới (creator) | P1 |
-
-### Note & Bookmark
-| ID | Story | Priority |
-|----|-------|----------|
-| NOTE-01 | Tạo ghi chú cá nhân | P1 |
-| NOTE-02 | Sửa/xóa ghi chú | P1 |
-| BKMK-01 | Đánh dấu bookmark | P1 |
-| BKMK-02 | Xóa bookmark | P1 |
-| BKMK-03 | Xem danh sách bookmark | P1 |
+| CHAT-05 | Xóa phiên chat | P1 |
 
 ### AI Services
 | ID | Story | Priority |
 |----|-------|----------|
-| AI-01 | Chat với AI hỏi đáp | P0 |
-| AI-02 | AI tạo quiz từ nội dung | P1 |
-| AI-03 | AI tóm tắt nội dung | P1 |
-| AI-04 | AI gợi ý giải bài tập | P1 |
-| AI-05 | AI chấm điểm bài nộp | P1 |
-| AI-06 | AI tạo flashcard tự động | P2 |
+| AI-01 | Tóm tắt tài liệu | P1 |
+| AI-02 | Giải thích khái niệm | P1 |
+| AI-03 | Gợi ý cách học | P2 |
+
+### Notes & Bookmarks
+| ID | Story | Priority |
+|----|-------|----------|
+| NOTE-01 | Tạo ghi chú cá nhân | P1 |
+| NOTE-02 | Sửa/xóa ghi chú | P1 |
+| NOTE-03 | Xem ghi chú theo tài liệu | P1 |
+| BKMK-01 | Đánh dấu bookmark | P1 |
+| BKMK-02 | Xóa bookmark | P1 |
+| BKMK-03 | Xem danh sách bookmark | P1 |
 
 ### Admin Only
 | ID | Story | Priority |
 |----|-------|----------|
 | ADM-01 | Quản lý users (CRUD) | P1 |
-| ADM-02 | Quản lý categories (CRUD) | P1 |
-| ADM-03 | Xem tất cả courses | P0 |
-| ADM-04 | Xem tất cả progress | P1 |
+| ADM-02 | Xem tất cả documents | P0 |
+| ADM-03 | Xóa document không phù hợp | P1 |
+| ADM-04 | Xem thống kê AI usage | P1 |
+| ADM-05 | Xem thống kê hệ thống | P1 |
+| ADM-06 | Export báo cáo | P2 |
 
 ---
 
@@ -430,62 +414,62 @@ Hệ thống có **2 roles**: `admin` và `user` (mặc định).
 
 | Resource | Public | User | Admin |
 |----------|--------|------|-------|
-| **COURSES** |
-| Course list | ✅ | ✅ | ✅ |
-| Course detail | ✅ | ✅ | ✅ |
-| Create course | - | ✅ | ✅ |
-| Update course | - | Owner | ✅ |
-| Delete course | - | Owner | ✅ |
-| **LESSONS** |
-| Lesson list | ✅ | ✅ | ✅ |
-| Create lesson | - | Owner | ✅ |
-| Update lesson | - | Owner | ✅ |
-| Delete lesson | - | Owner | ✅ |
-| **QUIZZES** |
-| View quiz | - | Enrolled | ✅ |
-| Submit quiz | - | Enrolled | ✅ |
-| Create quiz | - | Owner | ✅ |
-| **EXERCISES** |
-| View exercises | - | Enrolled | ✅ |
-| Submit exercise | - | Enrolled | ✅ |
-| Create exercise | - | Owner | ✅ |
+| **DOCUMENTS** |
+| View own documents | - | ✅ | ✅ |
+| Upload document | - | ✅ | ✅ |
+| Delete document | - | Owner | ✅ |
+| View all documents | - | - | ✅ |
 | **FLASHCARDS** |
-| View flashcards | - | Enrolled | ✅ |
-| Review flashcard | - | Enrolled | ✅ |
-| Create flashcard | - | Owner | ✅ |
-| **NOTES & BOOKMARKS** |
-| Create/View/Update | - | Self | ✅ |
-| **AI SERVICES** |
+| View own flashcards | - | ✅ | ✅ |
+| Review flashcard | - | ✅ | ✅ |
+| Create flashcard | - | ✅ | ✅ |
+| **QUIZ** |
+| View own quizzes | - | ✅ | ✅ |
+| Take quiz | - | ✅ | ✅ |
+| Create quiz | - | ✅ | ✅ |
+| **AI CHAT** |
 | Chat with AI | - | ✅ | ✅ |
-| Generate Quiz | - | ✅ | ✅ |
-| Summarize | - | ✅ | ✅ |
-| Solve Exercise | - | ✅ | ✅ |
-| Grade Submission | - | ✅ | ✅ |
-| Generate Flashcards | - | ✅ | ✅ |
+| View own chat history | - | ✅ | ✅ |
+| **NOTES & BOOKMARKS** |
+| Create/View/Update | - | ✅ Self | ✅ |
 | **PROGRESS** |
 | View own progress | - | ✅ | ✅ |
 | View all progress | - | - | ✅ |
-| **CHAT** |
-| Chat history | - | ✅ (self) | ✅ |
-| **CATEGORIES** |
-| List categories | ✅ | ✅ | ✅ |
-| Create category | - | - | ✅ |
-| Update category | - | - | ✅ |
-| Delete category | - | - | ✅ |
 | **USERS** |
 | List users | - | - | ✅ |
 | Update user | - | Self | ✅ |
 | Delete user | - | - | ✅ |
 
 **Owner Rules:**
-- Course: `user.role == "admin" OR course.creator_id == current_user.id`
-- Lesson: `user.role == "admin" OR lesson.course.creator_id == current_user.id`
+- Document: `user.role == "admin" OR document.user_id == current_user.id`
+- Flashcard: `user.role == "admin" OR flashcard.document.user_id == current_user.id`
 - User: `user.role == "admin" OR user.id == current_user.id`
 
-**Enrolled Rules:**
-- Quiz/Exercise/Flashcard access: `enrollment EXISTS OR user.role == "admin"`
+---
+
+## 📈 Success Metrics
+
+### User Engagement
+- Documents uploaded per user
+- Flashcards reviewed per day
+- Quiz completion rate
+- AI chat messages per session
+- Daily/Weekly active users
+
+### Learning Effectiveness
+- Spaced repetition streak
+- Quiz score improvement over time
+- Flashcard mastery rate
+- Time spent learning
+
+### System Health
+- AI response time
+- Document processing time
+- Error rate
+- API uptime
 
 ---
 
 *Tài liệu này định nghĩa rõ ràng user cần gì từ hệ thống.*
-*Version: 3.0 - Two roles (admin/user), Flashcards, Exercises, Notes, Bookmarks, AI Services*
+*Version: 4.0 - Document-RAG Based Architecture*
+*13 Tables, 48 APIs, 2 Roles*

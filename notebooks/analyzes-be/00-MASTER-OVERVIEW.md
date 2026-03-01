@@ -1,193 +1,143 @@
 # BE AI TUTOR - Master Overview
 
-> Tài liệu tổng quan cho toàn bộ dự án BE AI TUTOR - Nền tảng học tập thông minh với AI
+> Tài liệu tổng quan cho toàn bộ dự án BE AI TUTOR - Nền tảng học tập thông minh với AI và RAG System
+>
+> **Phiên bản**: 5.1 (Tương thích 100% tài liệu Đặc tả hệ thống Gia sư AI)
 
 ---
 
-## 📋 Mục Lục Tài Liệu
+## Quan Trọng - Cách Sử Dụng
+
+### Code Trong Spec Chỉ Là Tham Khảo
+
+```
++------------------------------------------------------------------+
+|  CODE TRONG CÁC FILE SPEC CHỈ LÀ THAM KHẢO                        |
+|                                                                   |
+|  Mục đích cuối cùng: Sử dụng OpenSpec để generate spec chi tiết   |
+|  Lệnh: /opsx-ff + tên file -> Generate implementation spec        |
+|                                                                   |
+|  Các file spec này mô tả:                                         |
+|  - Business logic và data flow                                    |
+|  - API endpoints và request/response format                       |
+|  - Database schema                                                |
+|  - Implementation patterns (tham khảo)                            |
++------------------------------------------------------------------+
+```
+
+---
+
+## Mục Lục Tài Liệu
 
 | File | Mô tả |
 |------|-------|
 | [00-MASTER-OVERVIEW.md](./00-MASTER-OVERVIEW.md) | Tổng quan dự án (file này) |
 | [01-BUSINESS-MODEL.md](./01-BUSINESS-MODEL.md) | Business Model & User Personas |
-| [02-DATABASE-DESIGN.md](./02-DATABASE-DESIGN.md) | Database Schema - 21 Tables |
+| [02-DATABASE-DESIGN.md](./02-DATABASE-DESIGN.md) | Database Schema - 20 Tables |
 | [03-CODE-STRUCTURE.md](./03-CODE-STRUCTURE.md) | Code Structure & Patterns |
-| [04-API-DESIGN.md](./04-API-DESIGN.md) | REST API - 75 Endpoints |
+| [04-API-DESIGN.md](./04-API-DESIGN.md) | REST API - 62 Endpoints |
 | [05-AUTH-DESIGN.md](./05-AUTH-DESIGN.md) | Authentication |
-| [06-AI-SERVICES-FLOW.md](./06-AI-SERVICES-FLOW.md) | Luồng tích hợp AI Services |
+| [06-AI-SERVICES-FLOW.md](./06-AI-SERVICES-FLOW.md) | RAG Pipeline & AI Prompt Engineering |
 | [07-SECURITY.md](./07-SECURITY.md) | Security & Access Control |
+| [08-USER-FLOWS.md](./08-USER-FLOWS.md) | User Interaction Flows |
+| [09-DEPENDENCIES-GUIDE.md](./09-DEPENDENCIES-GUIDE.md) | Technical Dependencies & Installation |
 
 ---
 
-## 🎯 Tóm Tắt Dự Án
+## Tóm Tắt Dự Án
 
 ### Concept
-**BE AI TUTOR** là nền tảng học tập trực tuyến tích hợp AI, hỗ trợ người dùng học tập thông qua khóa học, bài giảng, bài kiểm tra và trò chuyện với AI tutor.
+**BE AI TUTOR** là nền tảng gia sư ảo tích hợp AI với kiến trúc **Document-RAG based**. Hệ thống tự động hóa toàn bộ quy trình học tập từ tài liệu thô đến việc kiểm tra đánh giá.
+
+### Core Features (Requirement-Aligned)
+```
++-------------------------------------------------------------------+
+|                     AI TUTOR TOTAL WORKFLOW                        |
++-------------------------------------------------------------------+
+|                                                                    |
+|  1. INGESTION                                                      |
+|     +----------+    +----------+    +----------+                  |
+|     | PDF/DOCX |--->| RAG Pipe |--->| Structured |                  |
+|     +----------+    +----------+    |   Data     |                  |
+|                                     +-----+----+                  |
+|                                           |                       |
+|  2. AI ORCHESTRATION                      v                       |
+|     +-----------------------------------------------------------+ |
+|     |  +----------+   +-----------+  +----------+  +----------+ | |
+|     |  | Lộ trình |   | Flashcards|  | Ma trận  |  | Tóm tắt  | | |
+|     |  | (Bloom's)|   | (SRS)     |  | đề (Matrix)|  | (Sum)    | | |
+|     |  +----------+   +-----------+  +----------+  +----------+ | |
+|     +-----------------------------------------------------------+ |
+|                          |                                         |
+|  3. INTERACTION          v                                         |
+|     +----------+    +----------+    +----------+  +-----------+    |
+|     |  Học bài |    | Chat RAG |    | Làm đề   |  | Giải bài  |    |
+|     | theo lộ  |    | Context  |    | kiểm tra |  | tập (CoT) |    |
+|     | trình    |    | Aware    |    | & lấy KQ |  |           |    |
+|     +----------+    +----------+    +----------+  +-----------+    |
+|                                                                    |
++-------------------------------------------------------------------+
+```
 
 ### Điểm Khác Biệt
-- **AI Tutor**: Trò chuyện với AI để được hỗ trợ học tập 24/7
-- **Context-Aware AI**: AI hiểu ngữ cảnh khóa học đang học
-- **Quiz System**: Hệ thống bài kiểm tra tự động với chấm điểm
-- **Progress Tracking**: Theo dõi tiến độ học tập chi tiết
-- **Miễn phí 100%**: Không có phí, không thanh toán
+- **Curriculum Generation**: AI tự tạo lộ trình học tập theo tiêu chuẩn Bloom’s Taxonomy.
+- **Blueprint-based Test**: Sinh đề kiểm tra dựa trên ma trận (Test Matrix).
+- **Explainable Solver**: Giải bài tập bằng kỹ thuật Chain-Of-Thought (CoT).
+- **Human-in-the-Loop**: Cho phép người dùng chỉnh sửa Outline của Lộ trình/Tóm tắt trước khi AI sinh nội dung cuối.
 
 ---
 
-## 🏗️ Tech Stack
+## AI Prompt Engineering (Trọng tâm)
 
-### Backend
-- **Framework**: FastAPI (Python 3.11+)
-- **Database**: PostgreSQL 16+ (async với asyncpg)
-- **ORM**: SQLAlchemy 2.0+ (async)
-- **Cache**: Redis 7+
-- **Auth**: JWT (python-jose)
-- **AI**: Claude API / OpenAI
+Để đạt chất lượng cao nhất, hệ thống áp dụng các kỹ thuật Prompt đặc thù:
 
-### Architecture
-- **Pattern**: MVC (Controller → Service → Repository)
-- **Async**: Toàn bộ I/O operations async
-- **Validation**: Pydantic v2
+| Feature | Prompt Technique | Mục tiêu |
+|---------|-------------------|----------|
+| **Lộ trình học tập** | **Bloom’s Taxonomy** | Phân cấp kiến thức từ Nhận biết -> Hiểu -> Vận dụng... |
+| **Giải bài tập** | **Chain-of-Thought (CoT)** | Giải thích từng bước suy luận logic để user dễ hiểu. |
+| **Sinh đề kiểm tra** | **Constraint-based** | Đảm bảo đúng số lượng, độ khó và chủ đề theo ma trận. |
+| **Flashcards** | **Spaced Repetition** | Tinh chỉnh nội dung câu hỏi để tối ưu hóa việc ghi nhớ dài hạn. |
 
 ---
 
-## 📊 System Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         SYSTEM ARCHITECTURE                                 │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-    ┌─────────────┐         ┌─────────────┐         ┌─────────────┐
-    │   CLIENT    │         │   FASTAPI   │         │  POSTGRESQL │
-    │   (Web/App) │◀───────▶│   API       │◀───────▶│  DATABASE   │
-    │             │  REST   │   (Async)   │         │             │
-    └─────────────┘         └──────┬──────┘         └─────────────┘
-                                   │
-                    ┌──────────────┼──────────────┐
-                    │              │              │
-                    ▼              ▼              ▼
-            ┌───────────┐  ┌───────────┐  ┌───────────┐
-            │   REDIS   │  │CLAUDE API │  │  FILE     │
-            │   CACHE   │  │  (AI)     │  │  STORAGE  │
-            └───────────┘  └───────────┘  └───────────┘
-```
+## Tech Stack (Giữ nguyên)
+... (Python 3.12, FastAPI, PostgreSQL, Redis, Claude API, LangChain)
 
 ---
 
-## 👥 User Model
+## Database Tables Summary (V5.0)
 
-### Two Roles: Admin + User
+| Category | Tables |
+|----------|--------|
+| **Auth** | users |
+| **Documents & RAG** | documents, document_chunks |
+| **Learning Path** | learning_paths, path_stages, path_lessons, lesson_progress |
+| **Flashcards** | flashcards, flashcard_reviews |
+| **Assessment** | quizzes, quiz_questions, quiz_attempts, test_matrices, matrix_criteria |
+| **Chat & Notes** | chat_sessions, chat_messages, notes, bookmarks |
+| **Log AI** | ai_generations, homework_solutions |
 
-Hệ thống có **2 roles**: `admin` và `user` (mặc định).
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     USER PERMISSIONS                            │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ✅ USER (mặc định):                                            │
-│  ├── Xem và tạo khóa học                                        │
-│  ├── Xem và tạo bài học (trong course do mình tạo)              │
-│  ├── Xem và tạo quiz (trong course do mình tạo)                 │
-│  ├── Làm quiz và xem kết quả (nếu enrolled)                     │
-│  ├── Chat với AI                                                │
-│  ├── Xem tiến độ học tập của mình                               │
-│  └── Upload tài liệu                                            │
-│                                                                 │
-│  ✅ ADMIN (toàn quyền):                                         │
-│  ├── Tất cả quyền của User                                      │
-│  ├── Quản lý tất cả users (CRUD)                                │
-│  ├── Quản lý tất cả courses                                     │
-│  ├── Quản lý categories                                         │
-│  └── Xem tất cả progress                                        │
-│                                                                 │
-│  ✅ Ownership-based access:                                     │
-│  └── User chỉ sửa/xóa resource do mình tạo                      │
-│  └── Admin có thể sửa/xóa tất cả                                │
-│  ❌ KHÔNG CÓ THANH TOÁN / PHÍ                                   │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+**Tổng cộng: 20 Tables**
 
 ---
 
-## 🔄 Core Flows
+## API Summary (V5.0)
 
-### Learning Flow
-```
-Đăng ký → Xem danh sách khóa học → Đăng ký khóa → Học bài →
-Làm bài tập → Nộp bài → AI feedback → Làm Quiz → Review Flashcard →
-Chat với AI → Xem tiến độ
-```
+| Category | Số lượng APIs | Chức năng mới |
+|----------|---------------|---------------|
+| Documents | 6 | Upload & Status |
+| Learning Path | 8 | Generate, CRUD, Update Progress |
+| Flashcards | 7 | CRUD & SRS Review |
+| Quizzes | 6 | Take quiz & History |
+| Test Matrix | 5 | Create Matrix & Generate Test |
+| AI Homework | 3 | Solve & History |
+| AI Chat | 5 | RAG Chat |
+| Other | 15+ | Auth, Admin, Notes... |
 
-### Creating Flow
-```
-Tạo khóa học → Thêm bài học → Tạo flashcard → Tạo bài tập →
-Tạo quiz → Upload tài liệu → Xem progress học viên
-```
-
-### AI Services Flow
-```
-Chọn khóa → Mở chat → Gửi câu hỏi → AI phản hồi (context: khóa học) →
-Lưu lịch sử
-
-Hoặc:
-Xem bài học → AI tóm tắt → AI tạo quiz → AI tạo flashcard →
-Học flashcard (SRS)
-```
-
-### Spaced Repetition Flow (Flashcard)
-```
-Xem flashcard cần review → Review (đánh giá 0-5) → SM-2 algorithm →
-Tính next_review_at → Hiển thị card tiếp theo
-```
-
-### Exercise Submission Flow
-```
-Làm bài tập → Nộp bài → AI chấm điểm → Feedback →
-Có thể nộp lại (nếu allowed)
-```
+**Tổng cộng: 62 APIs**
 
 ---
 
-## 📅 Development Phases
-
-| Phase | Nội dung | Priority |
-|-------|----------|----------|
-| **Phase 1** | Database Models & Migrations | High |
-| **Phase 2** | Auth API (Register, Login, JWT) | High |
-| **Phase 3** | Course & Lesson APIs | High |
-| **Phase 4** | Quiz System APIs | High |
-| **Phase 5** | AI Chat Integration | High |
-| **Phase 6** | Progress Tracking | Medium |
-| **Phase 7** | Document Management | Medium |
-
----
-
-## ✅ Decisions Made
-
-| Decision | Choice | Reason |
-|----------|--------|--------|
-| User Role | Single role (user) | Đơn giản hóa, mọi user có quyền như nhau |
-| Pricing | Miễn phí 100% | Không có payment, không thu phí |
-| Database | PostgreSQL | Relational data, ACID, full-text search |
-| Auth | JWT | Stateless, scalable, mobile-friendly |
-| AI Provider | Claude API / OpenAI | Best-in-class LLM capabilities |
-| Architecture | MVC | Clear separation of concerns |
-| Async | Yes | High concurrency, better performance |
-
----
-
-## 🚀 Getting Started
-
-1. Đọc qua tất cả spec files trong folder này
-2. Setup environment: `cp .env.example .env`
-3. Run: `docker-compose up -d`
-4. Migrate: `alembic upgrade head`
-5. Start: `uvicorn src.main:app --reload`
-
----
-
-*Tài liệu được tạo ngày: 2026-02-27*
-*Cập nhật: 2026-03-01*
-*Version: 3.0 - 21 Tables, 75 APIs, Flashcards, Exercises, Notes, Bookmarks, AI Services*
+*Tài liệu được cập nhật: 2026-03-01*
+*Version: 5.1 - Tài liệu Master Overview chuẩn xác theo yêu cầu khách hàng.*
+*18 Screens, 20 Tables, 62 APIs*

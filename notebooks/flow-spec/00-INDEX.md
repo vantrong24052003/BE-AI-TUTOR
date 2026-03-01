@@ -1,6 +1,7 @@
 # BE AI TUTOR - Flow Specifications Index
 
 > Tổng hợp chi tiết specification cho từng tính năng của hệ thống AI Tutor
+> **Phiên bản**: 5.1 (Tương thích 100% tài liệu Đặc tả hệ thống Gia sư AI)
 
 ---
 
@@ -25,7 +26,46 @@
 
 ---
 
-## 📦 TECH STACK (Theo Require-customer.pdf)
+## 🎯 TỔNG QUAN PROJECT
+
+### Mô tả
+**AI Tutor** là ứng dụng hỗ trợ học tập thông minh sử dụng AI. Người dùng có thể:
+- Upload tài liệu (PDF, DOCX)
+- AI tự động tạo Flashcard, Quiz, Tóm tắt từ tài liệu
+- Chat với AI để hỏi đáp về nội dung tài liệu
+- Ôn tập Flashcard với thuật toán Spaced Repetition (SM-2)
+
+### Core Features
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     AI TUTOR WORKFLOW                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. UPLOAD TÀI LIỆU                                             │
+│     ┌──────────┐    ┌──────────┐    ┌──────────┐               │
+│     │  PDF/    │───▶│  Extract │───▶│  Store   │               │
+│     │  DOCX    │    │  Text    │    │  in RAG  │               │
+│     └──────────┘    └──────────┘    └────┬─────┘               │
+│                                          │                      │
+│  2. AI GENERATION                         ▼                      │
+│     ┌──────────────────────────────────────────────────┐       │
+│     │  ┌─────────┐  ┌─────────┐  ┌─────────────────┐  │       │
+│     │  │ Summary │  │ Flashcards │ │     Quiz       │  │       │
+│     │  └─────────┘  └─────────┘  └─────────────────┘  │       │
+│     └──────────────────────────────────────────────────┘       │
+│                          │                                      │
+│  3. STUDY                 ▼                                      │
+│     ┌──────────┐    ┌──────────┐    ┌──────────┐               │
+│     │  Review  │    │   Chat   │    │   Take   │               │
+│     │ Flashcard│    │ with AI  │    │   Quiz   │               │
+│     └──────────┘    └──────────┘    └──────────┘               │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📦 TECH STACK
 
 ### Backend
 
@@ -45,7 +85,7 @@
 |-----------|----------|---------|
 | **Claude API** (Anthropic) | Primary LLM | `pip install anthropic` |
 | **LangChain** | AI Framework | `pip install langchain langchain-community` |
-| **ChromaDB** / **Pinecone** | Vector Database (RAG) | `pip install chromadb` hoặc `pip install pinecone-client` |
+| **ChromaDB** | Vector Database (RAG) | `pip install chromadb` |
 | **sentence-transformers** | Embedding model | `pip install sentence-transformers` |
 
 ### Additional Libraries
@@ -69,6 +109,8 @@ passlib[bcrypt]>=1.7
 python-multipart>=0.0.6
 aiofiles>=23.2
 httpx>=0.26
+pypdf>=4.0
+python-docx>=1.1
 ```
 
 ---
@@ -90,11 +132,10 @@ httpx>=0.26
 │                                          │                      │
 │  2. STORAGE                              ▼                      │
 │     ┌──────────────────────────────────────────┐               │
-│     │           VECTOR DATABASE                 │               │
-│     │  (ChromaDB / Pinecone)                   │               │
+│     │           VECTOR DATABASE (ChromaDB)      │               │
 │     │  - document_chunks                       │               │
 │     │  - embeddings (768 dims)                 │               │
-│     │  - metadata (source, page, etc.)         │               │
+│     │  - metadata (document_id, page, etc.)    │               │
 │     └──────────────────────────────────────────┘               │
 │                          │                                      │
 │  3. RETRIEVAL            ▼                                      │
@@ -105,71 +146,19 @@ httpx>=0.26
 │                                          │                      │
 │  4. GENERATION                           ▼                      │
 │     ┌──────────────────────────────────────────┐               │
-│     │              LLM (Claude/GPT)             │               │
+│     │              LLM (Claude)                 │               │
 │     │  Context: Retrieved chunks + User query  │               │
 │     └──────────────────────────────────────────┘               │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### RAG Implementation
+### RAG Use Cases
 
-```python
-# services/rag_service.py (THAM KHẢO)
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from anthropic import Anthropic
-
-class RAGService:
-    def __init__(self):
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-        )
-        self.vector_store = Chroma(
-            persist_directory="./chroma_db",
-            embedding_function=self.embeddings
-        )
-        self.llm = Anthropic()
-
-    async def ingest_document(self, content: str, metadata: dict):
-        """Ingest document into vector store."""
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200
-        )
-        chunks = splitter.split_text(content)
-
-        self.vector_store.add_texts(
-            chunks,
-            metadatas=[metadata] * len(chunks)
-        )
-
-    async def query(self, question: str, k: int = 5) -> str:
-        """Query RAG system."""
-        # Retrieve relevant chunks
-        docs = self.vector_store.similarity_search(question, k=k)
-        context = "\n\n".join([d.page_content for d in docs])
-
-        # Generate response
-        response = self.llm.messages.create(
-            model="claude-sonnet-4-6-20250514",
-            max_tokens=1024,
-            messages=[{
-                "role": "user",
-                "content": f"""Dựa trên nội dung sau, hãy trả lời câu hỏi.
-
-NỘI DUNG:
-{context}
-
-CÂU HỎI: {question}
-
-Trả lời:"""
-            }]
-        )
-
-        return response.content[0].text
-```
+1. **AI Chat** - Trả lời câu hỏi dựa trên nội dung tài liệu
+2. **Tóm tắt tài liệu** - Sinh summary từ tài liệu
+3. **Sinh Flashcards** - Tạo flashcard từ nội dung
+4. **Tạo Quiz** - Tạo câu hỏi trắc nghiệm từ tài liệu
 
 ---
 
@@ -191,70 +180,13 @@ Trả lời:"""
 │  ┌──────────┐     ┌──────────┐     ┌──────────────────┐        │
 │  │ Return   │     │ Queue    │     │ - PDF Processing │        │
 │  │ Task ID  │     │ Status   │     │ - AI Generation  │        │
-│  └──────────┘     └──────────┘     │ - Email Sending  │        │
-│                                    └──────────────────┘        │
+│  └──────────┘     └──────────┘     └──────────────────┘        │
 │                                                                  │
 │  QUEUES:                                                         │
 │  ├── document_processing: Xử lý PDF/DOCX                       │
-│  ├── ai_generation: Tạo quiz, flashcard, summary               │
-│  └── notifications: Gửi email, notification                    │
+│  └── ai_generation: Tạo quiz, flashcard, summary               │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
-```
-
-### Queue Implementation (Tham khảo)
-
-```python
-# workers/task_queue.py (THAM KHẢO)
-import asyncio
-import redis.asyncio as redis
-from app.services.ai_service import AIService
-from app.services.document_service import DocumentService
-
-class TaskQueue:
-    def __init__(self):
-        self.redis = redis.from_url("redis://localhost:6379")
-        self.queues = {
-            "document_processing": self.process_document,
-            "ai_generation": self.process_ai_task,
-        }
-
-    async def enqueue(self, queue_name: str, task_data: dict) -> str:
-        """Add task to queue."""
-        task_id = str(uuid.uuid4())
-        await self.redis.hset(
-            f"task:{task_id}",
-            mapping={"status": "pending", **task_data}
-        )
-        await self.redis.rpush(queue_name, task_id)
-        return task_id
-
-    async def get_status(self, task_id: str) -> dict:
-        """Get task status."""
-        return await self.redis.hgetall(f"task:{task_id}")
-
-    async def worker(self, queue_name: str):
-        """Process tasks from queue."""
-        handler = self.queues[queue_name]
-
-        while True:
-            task_id = await self.redis.blpop(queue_name, timeout=0)
-            task_id = task_id[1].decode()
-
-            task_data = await self.redis.hgetall(f"task:{task_id}")
-
-            try:
-                await self.redis.hset(f"task:{task_id}", "status", "processing")
-                result = await handler(task_data)
-                await self.redis.hset(
-                    f"task:{task_id}",
-                    mapping={"status": "completed", "result": json.dumps(result)}
-                )
-            except Exception as e:
-                await self.redis.hset(
-                    f"task:{task_id}",
-                    mapping={"status": "failed", "error": str(e)}
-                )
 ```
 
 ---
@@ -263,20 +195,20 @@ class TaskQueue:
 
 | File | Tính năng | APIs | RAG | Queue |
 |------|-----------|------|-----|-------|
-| [01-AUTH-SPEC.md](./01-AUTH-SPEC.md) | Authentication | 8 | ❌ | ❌ |
-| [02-COURSES-SPEC.md](./02-COURSES-SPEC.md) | Courses | 9 | ❌ | ❌ |
-| [03-LESSONS-SPEC.md](./03-LESSONS-SPEC.md) | Lessons | 7 | ❌ | ❌ |
+| [01-AUTH-SPEC.md](./01-AUTH-SPEC.md) | Authentication | 4 | ❌ | ❌ |
+| [02-DOCUMENTS-SPEC.md](./02-DOCUMENTS-SPEC.md) | Documents | 6 | ✅ | ✅ |
+| [03-FLASHCARDS-SPEC.md](./03-FLASHCARDS-SPEC.md) | Flashcards | 7 | ✅ | ✅ |
 | [04-QUIZ-SPEC.md](./04-QUIZ-SPEC.md) | Quiz | 6 | ✅ | ✅ |
-| [05-FLASHCARDS-SPEC.md](./05-FLASHCARDS-SPEC.md) | Flashcards | 7 | ✅ | ✅ |
-| [06-EXERCISES-SPEC.md](./06-EXERCISES-SPEC.md) | Exercises | 6 | ✅ | ✅ |
-| [07-AI-SERVICES-SPEC.md](./07-AI-SERVICES-SPEC.md) | AI Services | 5 | ✅ | ✅ |
-| [08-CHAT-AI-SPEC.md](./08-CHAT-AI-SPEC.md) | AI Chat | 6 | ✅ | ❌ |
-| [09-PROGRESS-SPEC.md](./09-PROGRESS-SPEC.md) | Progress | 4 | ❌ | ❌ |
-| [10-NOTES-SPEC.md](./10-NOTES-SPEC.md) | Notes | 6 | ❌ | ❌ |
-| [11-BOOKMARKS-SPEC.md](./11-BOOKMARKS-SPEC.md) | Bookmarks | 5 | ❌ | ❌ |
-| [12-ADMIN-SPEC.md](./12-ADMIN-SPEC.md) | Admin | 10 | ❌ | ❌ |
+| [05-AI-SERVICES-SPEC.md](./05-AI-SERVICES-SPEC.md) | AI Services | 5 | ✅ | ✅ |
+| [06-CHAT-AI-SPEC.md](./06-CHAT-AI-SPEC.md) | AI Chat | 5 | ✅ | ❌ |
+| [07-NOTES-SPEC.md](./07-NOTES-SPEC.md) | Notes | 5 | ❌ | ❌ |
+| [08-BOOKMARKS-SPEC.md](./08-BOOKMARKS-SPEC.md) | Bookmarks | 4 | ❌ | ❌ |
+| [09-ADMIN-SPEC.md](./09-ADMIN-SPEC.md) | Admin | 6 | ❌ | ❌ |
+| [10-LEARNING-PATH-SPEC.md](./10-LEARNING-PATH-SPEC.md) | Learning Path | 8 | ✅ | ✅ |
+| [11-HOMEWORK-SPEC.md](./11-HOMEWORK-SPEC.md) | Homework Solver | 3 | ✅ | ✅ |
+| [04-API-DESIGN.md](../analyzes-be/04-API-DESIGN.md) | Test Matrix | 5 | ✅ | ✅ |
 
-**Total: 77 APIs**
+**Total: 62 APIs**
 
 ---
 
@@ -284,11 +216,10 @@ class TaskQueue:
 
 Các features sử dụng RAG:
 
-1. **AI Chat (3.6)** - Hỏi đáp dựa trên nội dung tài liệu
-2. **Tóm tắt tài liệu (3.2)** - Summarize documents
-3. **Sinh Flashcards (3.4)** - Generate flashcards from content
-4. **Tạo đề ôn tập (3.5)** - Generate quiz questions
-5. **Giải bài tập (3.8)** - Solve exercises with context
+1. **AI Chat** - Hỏi đáp dựa trên nội dung tài liệu
+2. **Tóm tắt tài liệu** - Summarize documents
+3. **Sinh Flashcards** - Generate flashcards from content
+4. **Tạo Quiz** - Generate quiz questions
 
 ---
 
@@ -296,9 +227,8 @@ Các features sử dụng RAG:
 
 Các features sử dụng Message Queue:
 
-1. **Upload tài liệu (3.1)** - Async PDF/DOCX processing
+1. **Upload tài liệu** - Async PDF/DOCX processing
 2. **AI Generation** - Quiz, Flashcard, Summary generation
-3. **Email notifications** - Send emails in background
 
 ---
 
@@ -307,17 +237,25 @@ Các features sử dụng Message Queue:
 ```
 notebooks/
 ├── analyzes-be/           # Overview luồng hoạt động
-│   ├── 00-BE-OVERVIEW.md
-│   ├── 01-DATABASE-DESIGN.md
-│   ├── 02-API-SPECIFICATION.md
+│   ├── 00-MASTER-OVERVIEW.md
+│   ├── 01-BUSINESS-MODEL.md
+│   ├── 02-DATABASE-DESIGN.md
 │   ├── 03-CODE-STRUCTURE.md
-│   └── 08-USER-FLOWS.md
+│   └── 04-API-DESIGN.md
 │
-└── flow-spec/             # Chi tiết spec từng feature (FILE NÀY)
+└── flow-spec/             # Chi tiết spec từng feature
     ├── 00-INDEX.md        # File này - Tech stack, RAG, Queue
     ├── 01-AUTH-SPEC.md
-    ├── 02-COURSES-SPEC.md
-    └── ...
+    ├── 02-DOCUMENTS-SPEC.md
+    ├── 03-FLASHCARDS-SPEC.md
+    ├── 04-QUIZ-SPEC.md
+    ├── 05-AI-SERVICES-SPEC.md
+    ├── 06-CHAT-AI-SPEC.md
+    ├── 07-NOTES-SPEC.md
+    ├── 08-BOOKMARKS-SPEC.md
+    ├── 09-ADMIN-SPEC.md
+    ├── 10-LEARNING-PATH-SPEC.md
+    └── 11-HOMEWORK-SPEC.md
 ```
 
 ---
@@ -338,6 +276,23 @@ notebooks/
 
 ---
 
-*Version: 2.0 - Updated: 2026-03-01*
-*12 Features, 75 APIs, 21 Tables*
+## 📊 Database Tables (Updated)
+
+| Category | Tables |
+|----------|--------|
+| **Auth** | users |
+| **Documents & RAG** | documents, document_chunks |
+| **Learning Path** | learning_paths, path_stages, path_lessons, lesson_progress |
+| **Flashcards** | flashcards, flashcard_reviews |
+| **Assessment** | quizzes, quiz_questions, quiz_attempts, test_matrices, matrix_criteria |
+| **Chat & Notes** | chat_sessions, chat_messages, notes, bookmarks |
+| **Log AI** | ai_generations, homework_solutions |
+
+**Tổng cộng: 20 Tables**
+
+---
+
+*Tài liệu được cập nhật: 2026-03-01*
+*Version: 5.1 - Tài liệu Master Overview chuẩn xác theo yêu cầu khách hàng.*
+*18 Screens, 20 Tables, 62 APIs*
 *Tech Stack: Python 3.12, FastAPI, PostgreSQL 16, Redis, Claude API, LangChain, ChromaDB*

@@ -7,26 +7,26 @@
 ## 1. TỔNG QUAN
 
 ### Mô tả
-Chat với AI Tutor để được hỗ trợ học tập, giải đáp thắc mắc.
+Chat với AI Tutor để được hỗ trợ học tập, giải đáp thắc mắc về tài liệu.
 
 ### Business Rules
-- Mỗi user có thể tạo nhiều conversations
-- Context được giữ trong mỗi conversation
-- AI có knowledge về các lessons user đã học
-- Token usage được track per conversation
+- Mỗi user có thể tạo nhiều chat sessions
+- Context được giữ trong mỗi session
+- AI sử dụng RAG để trả lời dựa trên nội dung tài liệu
+- Token usage được track per session
 
 ---
 
 ## 2. DATA MODEL
 
-### Conversation Fields
+### Chat Session Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | integer | Primary key |
-| user_id | integer | FK → users |
-| title | string | Tiêu đề conversation |
-| context | json | Context data (current lesson, etc.) |
+| id | string (UUID) | Primary key |
+| user_id | string (UUID) | FK → users |
+| document_id | string (UUID) | FK → documents (nullable) |
+| title | string | Tiêu đề session |
 | created_at | timestamp | Thời gian tạo |
 | updated_at | timestamp | Thời gian cập nhật cuối |
 
@@ -34,9 +34,9 @@ Chat với AI Tutor để được hỗ trợ học tập, giải đáp thắc m
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | integer | Primary key |
-| conversation_id | integer | FK → conversations |
-| role | enum | user/assistant/system |
+| id | string (UUID) | Primary key |
+| session_id | string (UUID) | FK → chat_sessions |
+| role | enum | user/assistant |
 | content | text | Nội dung tin nhắn |
 | tokens_used | integer | Số tokens sử dụng |
 | created_at | timestamp | Thời gian tạo |
@@ -45,63 +45,59 @@ Chat với AI Tutor để được hỗ trợ học tập, giải đáp thắc m
 
 ## 3. API ENDPOINTS
 
-### 3.1 List Conversations
+### 3.1 List Chat Sessions
 
-**Endpoint**: `GET /api/v1/chat/conversations`
+**Endpoint**: `GET /api/v1/chat/sessions`
 
 **Headers**: `Authorization: Bearer <token>`
+
+**Query Parameters**:
+| Param | Type | Description |
+|-------|------|-------------|
+| document_id | int | Filter by document (optional) |
 
 **Success Response** (200):
 ```json
 {
-  "conversations": [
+  "sessions": [
     {
-      "id": 1,
-      "title": "Hỏi về Python",
+      "id": "uuid-session-1",
+      "title": "Hỏi về Python Tutorial",
+      "document_id": "uuid-doc-1",
       "created_at": "2026-03-01T10:00:00Z",
       "updated_at": "2026-03-01T10:30:00Z",
-      "last_message": {
-        "role": "assistant",
-        "content": "Python là ngôn ngữ lập trình...",
-        "created_at": "2026-03-01T10:30:00Z"
-      },
       "message_count": 10
     }
-  ],
-  "meta": {
-    "total": 5
-  }
+  ]
 }
 ```
 
 ---
 
-### 3.2 Create Conversation
+### 3.2 Create Chat Session
 
-**Endpoint**: `POST /api/v1/chat/conversations`
+**Endpoint**: `POST /api/v1/chat/sessions`
 
 **Headers**: `Authorization: Bearer <token>`
 
 **Request Body**:
 ```json
 {
-  "title": "Hỏi về Python",
-  "context": {
-    "current_lesson_id": 1,
-    "current_course_id": 1
-  }
+  "title": "Hỏi về Python Tutorial",
+  "document_id": 1
 }
 ```
 
 **Success Response** (201):
 ```json
 {
-  "conversation": {
+  "session": {
     "id": 1,
-    "title": "Hỏi về Python",
-    "context": {
-      "current_lesson_id": 1,
-      "current_course_id": 1
+    "title": "Hỏi về Python Tutorial",
+    "document_id": 1,
+    "document": {
+      "id": 1,
+      "title": "Python Tutorial"
     },
     "created_at": "2026-03-01T10:00:00Z"
   }
@@ -110,9 +106,9 @@ Chat với AI Tutor để được hỗ trợ học tập, giải đáp thắc m
 
 ---
 
-### 3.3 Get Conversation
+### 3.3 Get Chat Session
 
-**Endpoint**: `GET /api/v1/chat/conversations/:id`
+**Endpoint**: `GET /api/v1/chat/sessions/:id`
 
 **Headers**: `Authorization: Bearer <token>`
 
@@ -125,10 +121,14 @@ Chat với AI Tutor để được hỗ trợ học tập, giải đáp thắc m
 **Success Response** (200):
 ```json
 {
-  "conversation": {
+  "session": {
     "id": 1,
-    "title": "Hỏi về Python",
-    "context": {...},
+    "title": "Hỏi về Python Tutorial",
+    "document_id": 1,
+    "document": {
+      "id": 1,
+      "title": "Python Tutorial"
+    },
     "created_at": "2026-03-01T10:00:00Z",
     "messages": [
       {
@@ -152,7 +152,7 @@ Chat với AI Tutor để được hỗ trợ học tập, giải đáp thắc m
 
 ### 3.4 Send Message
 
-**Endpoint**: `POST /api/v1/chat/conversations/:id/messages`
+**Endpoint**: `POST /api/v1/chat/sessions/:id/messages`
 
 **Headers**: `Authorization: Bearer <token>`
 
@@ -168,7 +168,7 @@ Chat với AI Tutor để được hỗ trợ học tập, giải đáp thắc m
 {
   "message": {
     "id": 3,
-    "conversation_id": 1,
+    "session_id": 1,
     "role": "assistant",
     "content": "Trong Python, bạn có thể khai báo biến bằng cách gán giá trị trực tiếp:\n\n```python\nname = 'John'\nage = 25\nprice = 19.99\n```\n\nPython sẽ tự động infer kiểu dữ liệu.",
     "tokens_used": 85,
@@ -179,24 +179,24 @@ Chat với AI Tutor để được hỗ trợ học tập, giải đáp thắc m
 
 ---
 
-### 3.5 Delete Conversation
+### 3.5 Delete Chat Session
 
-**Endpoint**: `DELETE /api/v1/chat/conversations/:id`
+**Endpoint**: `DELETE /api/v1/chat/sessions/:id`
 
 **Headers**: `Authorization: Bearer <token>`
 
 **Success Response** (200):
 ```json
 {
-  "message": "Conversation deleted"
+  "message": "Chat session deleted"
 }
 ```
 
 ---
 
-### 3.6 Update Conversation Title
+### 3.6 Update Chat Session Title
 
-**Endpoint**: `PUT /api/v1/chat/conversations/:id`
+**Endpoint**: `PUT /api/v1/chat/sessions/:id`
 
 **Headers**: `Authorization: Bearer <token>`
 
@@ -214,39 +214,34 @@ Chat với AI Tutor để được hỗ trợ học tập, giải đáp thắc m
 ### System Prompt
 
 ```
-You are an AI Tutor helping students learn programming and various subjects.
+You are an AI Tutor helping students learn from their study materials.
 You are friendly, patient, and encouraging.
 
 Guidelines:
+- Answer questions based on the provided document context
 - Explain concepts clearly with examples
 - Use code blocks for programming examples
 - Break down complex topics into simpler parts
 - Encourage students to try solving problems themselves
 - Provide hints before giving full solutions
-- Celebrate student progress
+- If the answer is not in the document, say so honestly
 
-Current context:
-{context}
+Document context:
+{document_context}
 ```
 
-### Context Injection
+### RAG Context Injection
 
 ```python
-def build_context(user: User, conversation: Conversation) -> str:
-    context_parts = []
+async def build_context(document_id: int, query: str) -> str:
+    """Build context from RAG system based on user query."""
+    # Get relevant chunks from RAG
+    relevant_chunks = await rag_service.query(document_id, query, k=5)
 
-    # Add user's enrolled courses
-    courses = get_user_courses(user.id)
-    if courses:
-        context_parts.append(f"Student is enrolled in: {', '.join(c['title'] for c in courses)}")
+    # Combine chunks into context
+    context = "\n\n".join([chunk["content"] for chunk in relevant_chunks])
 
-    # Add current lesson context
-    if conversation.context.get("current_lesson_id"):
-        lesson = get_lesson(conversation.context["current_lesson_id"])
-        context_parts.append(f"Currently learning: {lesson['title']}")
-        context_parts.append(f"Lesson content summary: {lesson['summary'][:500]}")
-
-    return "\n".join(context_parts)
+    return context
 ```
 
 ---
@@ -256,89 +251,92 @@ def build_context(user: User, conversation: Conversation) -> str:
 ### Service
 
 ```python
-# app/services/chat_service.py
+# app/services/chat_service.py (THAM KHẢO)
 from datetime import datetime
 from anthropic import Anthropic
-from app.repositories.conversation_repository import ConversationRepository
+from app.repositories.chat_session_repository import ChatSessionRepository
 from app.repositories.message_repository import MessageRepository
+from app.services.rag_service import RAGService
 from app.core.config import settings
 
 class ChatService:
     def __init__(
         self,
-        conversation_repo: ConversationRepository,
-        message_repo: MessageRepository
+        session_repo: ChatSessionRepository,
+        message_repo: MessageRepository,
+        rag_service: RAGService
     ):
-        self.conversation_repo = conversation_repo
+        self.session_repo = session_repo
         self.message_repo = message_repo
+        self.rag_service = rag_service
         self.ai_client = Anthropic(api_key=settings.AI_API_KEY)
 
-    async def send_message(self, conversation_id: int, user_id: int,
+    async def send_message(self, session_id: int, user_id: int,
                           content: str) -> dict:
-        # Verify conversation belongs to user
-        conversation = await self.conversation_repo.get_by_id(conversation_id)
-        if not conversation or conversation["user_id"] != user_id:
-            raise NotFoundError("Conversation not found")
+        # Verify session belongs to user
+        session = await self.session_repo.get_by_id(session_id)
+        if not session or session["user_id"] != user_id:
+            raise NotFoundError("Chat session not found")
 
         # Save user message
         await self.message_repo.create({
-            "conversation_id": conversation_id,
+            "session_id": session_id,
             "role": "user",
             "content": content,
             "created_at": datetime.utcnow()
         })
 
-        # Get conversation history
-        messages = await self.message_repo.get_by_conversation(conversation_id)
+        # Get chat history
+        messages = await self.message_repo.get_by_session(session_id)
 
-        # Build context
-        system_prompt = self._build_system_prompt(conversation)
+        # Build context using RAG if document is attached
+        document_context = ""
+        if session.get("document_id"):
+            document_context = await self.rag_service.query(
+                session["document_id"],
+                content,
+                k=5
+            )
+
+        # Build system prompt
+        system_prompt = self._build_system_prompt(document_context)
 
         # Call AI
         ai_response = await self._call_ai(system_prompt, messages)
 
         # Save AI response
         assistant_message = await self.message_repo.create({
-            "conversation_id": conversation_id,
+            "session_id": session_id,
             "role": "assistant",
             "content": ai_response["content"],
             "tokens_used": ai_response["tokens_used"],
             "created_at": datetime.utcnow()
         })
 
-        # Update conversation timestamp
-        await self.conversation_repo.update(conversation_id, {
+        # Update session timestamp
+        await self.session_repo.update(session_id, {
             "updated_at": datetime.utcnow()
         })
 
         return assistant_message
 
-    def _build_system_prompt(self, conversation: dict) -> str:
-        base_prompt = """You are an AI Tutor helping students learn.
+    def _build_system_prompt(self, document_context: str = "") -> str:
+        base_prompt = """You are an AI Tutor helping students learn from their study materials.
 You are friendly, patient, and encouraging.
 
 Guidelines:
+- Answer questions based on the provided document context
 - Explain concepts clearly with examples
 - Use code blocks (```) for code examples
 - Break down complex topics
 - Encourage problem-solving
-- Provide hints before solutions"""
+- Provide hints before solutions
+- If the answer is not in the document, say so honestly"""
 
-        # Add context if available
-        context = conversation.get("context", {})
-        if context:
-            context_str = self._format_context(context)
-            base_prompt += f"\n\nCurrent context:\n{context_str}"
+        if document_context:
+            base_prompt += f"\n\nDocument context:\n{document_context}"
 
         return base_prompt
-
-    def _format_context(self, context: dict) -> str:
-        parts = []
-        if context.get("current_lesson"):
-            parts.append(f"Currently studying: {context['current_lesson']['title']}")
-        if context.get("current_course"):
-            parts.append(f"Course: {context['current_course']['title']}")
-        return "\n".join(parts)
 
     async def _call_ai(self, system: str, messages: list) -> dict:
         # Format messages for API
@@ -365,31 +363,30 @@ Guidelines:
 ## 6. DATABASE SCHEMA
 
 ```sql
--- conversations table
-CREATE TABLE conversations (
+-- chat_sessions table
+CREATE TABLE chat_sessions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id),
-    title VARCHAR(200) DEFAULT 'New Chat',
-    context JSONB,
+    document_id INTEGER REFERENCES documents(id) ON DELETE SET NULL,
+    title VARCHAR(200) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- messages table
-CREATE TABLE messages (
+-- chat_messages table
+CREATE TABLE chat_messages (
     id SERIAL PRIMARY KEY,
-    conversation_id INTEGER NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+    session_id INTEGER NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'assistant')),
     content TEXT NOT NULL,
     tokens_used INTEGER DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- Indexes
-CREATE INDEX idx_conversations_user ON conversations(user_id);
-CREATE INDEX idx_conversations_updated ON conversations(updated_at DESC);
-CREATE INDEX idx_messages_conversation ON messages(conversation_id);
-CREATE INDEX idx_messages_created ON messages(created_at);
+CREATE INDEX idx_chat_sessions_user ON chat_sessions(user_id);
+CREATE INDEX idx_chat_sessions_document ON chat_sessions(document_id);
+CREATE INDEX idx_chat_messages_session ON chat_messages(session_id);
 ```
 
 ---
@@ -399,12 +396,12 @@ CREATE INDEX idx_messages_created ON messages(created_at);
 ### SSE Endpoint
 
 ```python
-# app/controllers/chat_controller.py
+# app/controllers/chat_controller.py (THAM KHẢO)
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 import asyncio
 
-@router.post("/conversations/{id}/messages/stream")
+@router.post("/sessions/{id}/messages/stream")
 async def send_message_stream(
     id: int,
     request: SendMessageRequest,
@@ -442,19 +439,19 @@ from httpx import AsyncClient
 
 @pytest.mark.asyncio
 class TestChatAPI:
-    async def test_create_conversation(self, client: AsyncClient, auth_header):
+    async def test_create_session(self, client: AsyncClient, auth_header):
         response = await client.post(
-            "/api/v1/chat/conversations",
+            "/api/v1/chat/sessions",
             headers=auth_header,
-            json={"title": "Test Chat"}
+            json={"title": "Test Chat", "document_id": 1}
         )
         assert response.status_code == 201
         data = response.json()
-        assert data["conversation"]["title"] == "Test Chat"
+        assert data["session"]["title"] == "Test Chat"
 
-    async def test_send_message(self, client: AsyncClient, auth_header, conversation):
+    async def test_send_message(self, client: AsyncClient, auth_header, chat_session):
         response = await client.post(
-            f"/api/v1/chat/conversations/{conversation.id}/messages",
+            f"/api/v1/chat/sessions/{chat_session.id}/messages",
             headers=auth_header,
             json={"content": "What is Python?"}
         )
@@ -463,25 +460,25 @@ class TestChatAPI:
         assert data["message"]["role"] == "assistant"
         assert len(data["message"]["content"]) > 0
 
-    async def test_conversation_history(self, client: AsyncClient, auth_header, conversation_with_messages):
+    async def test_session_history(self, client: AsyncClient, auth_header, chat_session_with_messages):
         response = await client.get(
-            f"/api/v1/chat/conversations/{conversation_with_messages.id}",
+            f"/api/v1/chat/sessions/{chat_session_with_messages.id}",
             headers=auth_header
         )
         assert response.status_code == 200
         data = response.json()
-        assert len(data["conversation"]["messages"]) > 0
+        assert len(data["session"]["messages"]) > 0
 
-    async def test_delete_conversation(self, client: AsyncClient, auth_header, conversation):
+    async def test_delete_session(self, client: AsyncClient, auth_header, chat_session):
         response = await client.delete(
-            f"/api/v1/chat/conversations/{conversation.id}",
+            f"/api/v1/chat/sessions/{chat_session.id}",
             headers=auth_header
         )
         assert response.status_code == 200
 
         # Verify deleted
         response = await client.get(
-            f"/api/v1/chat/conversations/{conversation.id}",
+            f"/api/v1/chat/sessions/{chat_session.id}",
             headers=auth_header
         )
         assert response.status_code == 404
@@ -489,4 +486,5 @@ class TestChatAPI:
 
 ---
 
-*Version: 1.0 - Updated: 2026-03-01*
+*Version: 5.1 - Updated: 2026-03-01*
+*Updated to use Documents instead of Lessons*

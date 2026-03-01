@@ -1,1038 +1,964 @@
-# BE AI TUTOR - User Flows Chi Tiết
+# BE AI TUTOR - User Flows Chi Tiết (Document-RAG Based)
 
-> Tài liệu mô tả chi tiết các luồng nghiệp vụ trong hệ thống
+> Tài liệu mô tả chi tiết các luồng nghiệp vụ trong hệ thống AI Tutor
 >
-> **Version**: 3.0
+> **Version**: 4.0 - Document-RAG Architecture
 
 ---
 
-## 📋 Danh Sách Luồng
+## Overview
 
-| # | Luồng | Mô tả | Độ ưu tiên |
+AI Tutor la ung dung ho tro hoc tap thong minh su dung AI. Nguoi dung co the:
+- Upload tai lieu (PDF, DOCX)
+- AI tu dong tao Flashcard, Quiz, Tom tat tu tai lieu
+- Chat voi AI de hoi dap ve noi dung tai lieu
+- On tap Flashcard voi thuat toan Spaced Repetition (SM-2)
+
+### Core Architecture
+
+```
++------------------------------------------------------------------+
+|                     AI TUTOR ARCHITECTURE                          |
++------------------------------------------------------------------+
+|                                                                    |
+|  1. DOCUMENT INGESTION                                            |
+|     +----------+    +----------+    +----------+                  |
+|     |  PDF/    |--->|  Chunk   |--->| Embedding|                  |
+|     |  DOCX    |    |  Split   |    |  Model   |                  |
+|     +----------+    +----------+    +-----+----+                  |
+|                                          |                         |
+|  2. RAG STORAGE                          v                         |
+|     +------------------------------------------+                   |
+|     |         VECTOR DATABASE (ChromaDB)        |                   |
+|     |  - document_chunks                       |                   |
+|     |  - embeddings (768 dims)                 |                   |
+|     |  - metadata (document_id, page, etc.)    |                   |
+|     +------------------------------------------+                   |
+|                          |                                         |
+|  3. AI GENERATION        v                                         |
+|     +--------------------------------------------------+          |
+|     |  +---------+  +-----------+  +---------------+  |          |
+|     |  | Summary |  | Flashcards|  |     Quiz      |  |          |
+|     |  +---------+  +-----------+  +---------------+  |          |
+|     +--------------------------------------------------+          |
+|                          |                                         |
+|  4. STUDY                v                                         |
+|     +----------+    +----------+    +----------+                  |
+|     |  Review  |    |   Chat   |    |   Take   |                  |
+|     | Flashcard|    | with AI  |    |   Quiz   |                  |
+|     +----------+    +----------+    +----------+                  |
+|                                                                    |
++------------------------------------------------------------------+
+```
+
+---
+
+## Danh Sach Luong
+
+| # | Luong | Mo ta | Do uu tien |
 |---|-------|-------|-----------|
-| 1 | Auth Flow | Đăng ký, đăng nhập, logout | P0 |
-| 2 | Course Flow | CRUD khóa học, đăng ký | P0 |
-| 3 | Lesson Flow | CRUD bài học, học bài | P0 |
-| 4 | Quiz Flow | Làm quiz, chấm điểm | P0 |
-| 5 | Exercise Flow | Nộp bài, AI chấm điểm | P0 |
-| 6 | Flashcard Flow | Học flashcard (SRS) | P0 |
-| 7 | AI Chat Flow | Chat với AI Tutor | P0 |
-| 8 | AI Services Flow | AI tạo quiz, tóm tắt, etc. | P1 |
-| 9 | Progress Flow | Theo dõi tiến độ | P1 |
-| 10 | Admin Flow | Quản lý users, categories | P1 |
-| 11 | Note & Bookmark Flow | Ghi chú, đánh dấu | P2 |
+| 1 | Authentication Flow | Dang ky, dang nhap, logout | P0 |
+| 2 | Document Flow | Upload, xu ly, luu tru tai lieu | P0 |
+| 3 | Document Processing Flow | Async processing, RAG ingestion | P0 |
+| 4 | Flashcard Flow | Tao, on tap flashcard (SRS) | P0 |
+| 5 | Quiz Flow | Tao, lam quiz, cham diem | P0 |
+| 6 | AI Chat Flow | Chat voi AI Tutor (RAG) | P0 |
+| 7 | Notes Flow | Ghi chu ca nhan | P1 |
+| 8 | Bookmarks Flow | Danh dau tai lieu | P1 |
+| 9 | RAG Query Flow | Truy van tu vector database | P1 |
+| 10 | SRS Algorithm Flow | Spaced repetition logic | P1 |
 
 ---
 
-## 1. AUTH FLOW
+## 1. AUTHENTICATION FLOW
 
-### 1.1 Registration Flow
+### 1.1 Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         REGISTRATION FLOW                                    │
-└─────────────────────────────────────────────────────────────────────────────┘
+Register --> Login --> Access Token --> Use App
+```
+
+### 1.2 Registration Flow
+
+```
++------------------------------------------------------------------+
+|                      REGISTRATION FLOW                             |
++------------------------------------------------------------------+
 
 User                    Frontend                 Backend                 Database
-  │                         │                        │                       │
-  │  1. Fill form           │                        │                       │
-  │  (name, email, pwd)     │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │  2. Validate client    │                       │
-  │                         │  (email format,        │                       │
-  │                         │   password strength)   │                       │
-  │                         │                        │                       │
-  │                         │  3. POST /api/auth/register                   │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │  4. Validate server  │
-  │                         │                        │  (Pydantic schema)   │
-  │                         │                        │                       │
-  │                         │                        │  5. Check email exists│
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │ ◀─────────────────────│
-  │                         │                        │  6. Not exists       │
-  │                         │                        │                       │
-  │                         │                        │  7. Hash password    │
-  │                         │                        │  (bcrypt, 12 rounds) │
-  │                         │                        │                       │
-  │                         │                        │  8. Create user      │
-  │                         │                        │  (role='user')       │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  9. Generate tokens  │
-  │                         │                        │  (access + refresh)  │
-  │                         │                        │                       │
-  │                         │  10. Return user + tokens                      │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  11. Store tokens       │                        │                       │
-  │  (localStorage/cookie)  │                        │                       │
-  │ ◀────────────────────── │                        │                       │
-  │                         │                        │                       │
-  │  12. Redirect to /dashboard                      │                       │
-  │ ──────────────────────▶│                        │                       │
+  |                         |                        |                       |
+  |  1. Fill form           |                        |                       |
+  |  (name, email, pwd)     |                        |                       |
+  | ----------------------> |                        |                       |
+  |                         |  2. Validate client    |                       |
+  |                         |  (email format,        |                       |
+  |                         |   password strength)   |                       |
+  |                         |                        |                       |
+  |                         |  3. POST /api/v1/auth/register             |
+  |                         | ----------------------> |                       |
+  |                         |                        |  4. Check email exists |
+  |                         |                        | ---------------------->|
+  |                         |                        | <----------------------|
+  |                         |                        |                       |
+  |                         |                        |  5. Hash password     |
+  |                         |                        |  (bcrypt)             |
+  |                         |                        |                       |
+  |                         |                        |  6. Create user       |
+  |                         |                        | ---------------------->|
+  |                         |                        | <----------------------|
+  |                         |                        |                       |
+  |                         |                        |  7. Generate tokens   |
+  |                         |                        |  (access + refresh)   |
+  |                         |                        |                       |
+  |                         |  8. Return user + tokens                      |
+  |                         | <---------------------- |                       |
+  |  9. Store tokens        |                        |                       |
+  | <---------------------- |                        |                       |
+  |                         |                        |                       |
 ```
 
-**Validation Rules:**
-```python
-# Email
-- Required
-- Valid email format
-- Max 255 chars
-- Unique in system
-
-# Password
-- Required
-- Min 8 characters
-- At least 1 uppercase
-- At least 1 lowercase
-- At least 1 number
-- At least 1 special char (!@#$%^&*)
-
-# Name
-- Required
-- Min 2 characters
-- Max 100 characters
-```
-
-**Error Cases:**
-| Error | Code | Message |
-|-------|------|---------|
-| Email exists | 400 | "Email already registered" |
-| Invalid email | 422 | "Invalid email format" |
-| Weak password | 422 | "Password must contain..." |
-| Name too short | 422 | "Name must be at least 2 characters" |
-
----
-
-### 1.2 Login Flow
+### 1.3 Login Flow
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            LOGIN FLOW                                         │
-└─────────────────────────────────────────────────────────────────────────────┘
++------------------------------------------------------------------+
+|                          LOGIN FLOW                                |
++------------------------------------------------------------------+
 
 User                    Frontend                 Backend                 Database
-  │                         │                        │                       │
-  │  1. Enter credentials   │                        │                       │
-  │  (email + password)     │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  2. POST /api/auth/login                       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  3. Check rate limit │
-  │                         │                        │  (5 attempts/min)    │
-  │                         │                        │                       │
-  │                         │                        │  4. Find user by email
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │ ◀─────────────────────│
-  │                         │                        │                       │
-  │                         │                        │  5. Verify password  │
-  │                         │                        │  (bcrypt.verify)     │
-  │                         │                        │                       │
-  │                         │                        │  6. Check is_active  │
-  │                         │                        │                       │
-  │                         │                        │  7. Generate tokens  │
-  │                         │                        │  - access: 30 min    │
-  │                         │                        │  - refresh: 7 days   │
-  │                         │                        │                       │
-  │                         │  8. Return tokens + user profile                │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  9. Store tokens        │                        │                       │
-  │  10. Update auth state  │                        │                       │
-  │ ◀────────────────────── │                        │                       │
-  │                         │                        │                       │
-  │  11. Redirect to dashboard                      │                       │
+  |                         |                        |                       |
+  |  1. Enter credentials   |                        |                       |
+  |  (email, password)      |                        |                       |
+  | ----------------------> |                        |                       |
+  |                         |                        |                       |
+  |                         |  2. POST /api/v1/auth/login                  |
+  |                         | ----------------------> |                       |
+  |                         |                        |  3. Find user by email|
+  |                         |                        | ---------------------->|
+  |                         |                        | <----------------------|
+  |                         |                        |                       |
+  |                         |                        |  4. Verify password   |
+  |                         |                        |  (bcrypt.verify)      |
+  |                         |                        |                       |
+  |                         |                        |  5. Generate tokens   |
+  |                         |                        |                       |
+  |                         |  6. Return user + tokens                      |
+  |                         | <---------------------- |                       |
+  |  7. Store tokens        |                        |                       |
+  | <---------------------- |                        |                       |
+  |                         |                        |                       |
 ```
 
-**JWT Payload:**
-```json
-{
-  "sub": 1,
-  "email": "user@example.com",
-  "role": "user",
-  "iat": 1709045400,
-  "exp": 1709047200
-}
-```
+### 1.4 API Calls
+
+| Step | Method | Endpoint | Description |
+|------|--------|----------|-------------|
+| 1 | POST | `/api/v1/auth/register` | Dang ky nguoi dung moi |
+| 2 | POST | `/api/v1/auth/login` | Dang nhap |
+| 3 | POST | `/api/v1/auth/refresh` | Refresh access token |
+| 4 | POST | `/api/v1/auth/logout` | Dang xuat |
+| 5 | GET | `/api/v1/auth/me` | Lay thong tin user hien tai |
+| 6 | PUT | `/api/v1/auth/profile` | Cap nhat profile |
+| 7 | POST | `/api/v1/auth/forgot-password` | Quen mat khau |
+| 8 | POST | `/api/v1/auth/reset-password` | Dat lai mat khau |
 
 ---
 
-### 1.3 Token Refresh Flow
+## 2. DOCUMENT FLOW
+
+### 2.1 Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         TOKEN REFRESH FLOW                                    │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-Frontend                 Backend                 Redis                  Database
-  │                         │                       │                       │
-  │  1. Access token expired│                       │                       │
-  │  (401 from API call)    │                       │                       │
-  │                         │                       │                       │
-  │  2. POST /api/auth/refresh                       │                       │
-  │  (with refresh_token)   │                       │                       │
-  │ ──────────────────────▶ │                       │                       │
-  │                         │                       │                       │
-  │                         │  3. Verify refresh token                     │
-  │                         │                       │                       │
-  │                         │  4. Check blacklist   │                       │
-  │                         │ ─────────────────────▶│                       │
-  │                         │ ◀─────────────────────│                       │
-  │                         │  5. Not blacklisted   │                       │
-  │                         │                       │                       │
-  │                         │  6. Get user from DB  │                       │
-  │                         │ ─────────────────────────────────────────────▶│
-  │                         │ ◀─────────────────────────────────────────────│
-  │                         │                       │                       │
-  │                         │  7. Check user still active                   │
-  │                         │                       │                       │
-  │                         │  8. Generate new access token                  │
-  │                         │                       │                       │
-  │  9. Return new access token                      │                       │
-  │ ◀─────────────────────│                       │                       │
-  │                         │                       │                       │
-  │  10. Retry original API call                    │                       │
+Upload PDF/DOCX --> Validate --> Store --> Queue Processing -->
+Extract Text --> Chunk --> Embed --> Store in ChromaDB --> Ready
 ```
+
+### 2.2 Upload Document Flow
+
+```
++------------------------------------------------------------------+
+|                     DOCUMENT UPLOAD FLOW                           |
++------------------------------------------------------------------+
+
+User          Frontend       Backend(API)     TaskQueue      Worker      Database   ChromaDB
+  |               |               |               |             |            |          |
+  | 1. Select    |               |               |             |            |          |
+  |    file      |               |               |             |            |          |
+  | ------------->|               |               |             |            |          |
+  |               | 2. Validate   |               |             |            |          |
+  |               |  (type, size) |               |             |            |          |
+  |               |               |               |             |            |          |
+  |               | 3. POST /api/v1/documents     |             |            |          |
+  |               | ------------->|               |             |            |          |
+  |               |               | 4. Save file  |             |            |          |
+  |               |               | ------------->|             |            |          |
+  |               |               |               |             |            |          |
+  |               |               | 5. Create doc |             |            |          |
+  |               |               |    record     |             |            |          |
+  |               |               | --------------|-------------|----------->|          |
+  |               |               |               |             |            |          |
+  |               |               | 6. Queue task |             |            |          |
+  |               |               | ------------->|             |            |          |
+  |               |               |               |             |            |          |
+  |               | 7. Return doc + task_id       |             |            |          |
+  |               | <-------------|               |             |            |          |
+  | 8. Show       |               |               |             |            |          |
+  |    pending    |               |               |             |            |          |
+  | <-------------|               |               |             |            |          |
+  |               |               |               |             |            |          |
+```
+
+### 2.3 Document Processing Flow (Async)
+
+```
++------------------------------------------------------------------+
+|                 DOCUMENT PROCESSING FLOW (ASYNC)                   |
++------------------------------------------------------------------+
+
+Worker          DocumentService      RAGService       Database      ChromaDB
+  |                   |                   |               |            |
+  | 1. Get task       |                   |               |            |
+  |    (doc_id)       |                   |               |            |
+  | ----------------->|                   |               |            |
+  |                   |                   |               |            |
+  |                   | 2. Update status  |               |            |
+  |                   |    = processing   |               |            |
+  |                   | ------------------|-------------->|            |
+  |                   |                   |               |            |
+  |                   | 3. Extract text   |               |            |
+  |                   |    (pypdf/docx)   |               |            |
+  |                   |                   |               |            |
+  |                   | 4. Chunk text     |               |            |
+  |                   |    (1000 chars,   |               |            |
+  |                   |     200 overlap)  |               |            |
+  |                   |                   |               |            |
+  |                   | 5. Generate       |               |            |
+  |                   |    embeddings     |               |            |
+  |                   | ----------------->|               |            |
+  |                   |                   | 6. Store in   |            |
+  |                   |                   |    ChromaDB   |            |
+  |                   |                   | --------------|----------->|
+  |                   |                   |               |            |
+  |                   | 7. Update status  |               |            |
+  |                   |    = ready        |               |            |
+  |                   | ------------------|-------------->|            |
+  |                   |                   |               |            |
+  | 8. Task complete  |                   |               |            |
+  | <-----------------|                   |               |            |
+  |                   |                   |               |            |
+```
+
+### 2.4 Document Status Flow
+
+```
++----------+     +----------+     +------------+     +--------+
+|  UPLOAD  |---->| PENDING  |---->| PROCESSING |---->| READY  |
+|  (moi)   |     | (cho)    |     | (xu ly)    |     |(san sang)|
++----------+     +----------+     +------------+     +--------+
+                                        |
+                                        v
+                                  +----------+
+                                  |  FAILED  |
+                                  +----------+
+```
+
+### 2.5 API Calls
+
+| Step | Method | Endpoint | Description |
+|------|--------|----------|-------------|
+| 1 | POST | `/api/v1/documents` | Upload tai lieu |
+| 2 | GET | `/api/v1/documents` | Lay danh sach tai lieu |
+| 3 | GET | `/api/v1/documents/:id` | Lay chi tiet tai lieu |
+| 4 | GET | `/api/v1/documents/:id/status` | Lay trang thai xu ly |
+| 5 | DELETE | `/api/v1/documents/:id` | Xoa tai lieu |
+| 6 | GET | `/api/v1/documents/:id/download` | Tai tai lieu |
 
 ---
 
-### 1.4 Logout Flow
+## 3. FLASHCARD FLOW
+
+### 3.1 Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            LOGOUT FLOW                                        │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-User                    Frontend                 Backend                 Redis
-  │                         │                        │                       │
-  │  1. Click logout        │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  2. POST /api/auth/logout                       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  3. Blacklist tokens  │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │  (TTL = token expiry) │
-  │                         │                        │                       │
-  │                         │  4. Success            │                       │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  5. Clear local tokens   │                        │                       │
-  │  6. Reset auth state     │                        │                       │
-  │ ◀────────────────────── │                        │                       │
-  │                         │                        │                       │
-  │  7. Redirect to /login   │                        │                       │
+View Document --> Generate Flashcards (AI) --> Review Flashcards (SRS) -->
+Track Progress --> Schedule Next Review
 ```
 
----
-
-## 2. COURSE FLOW
-
-### 2.1 Course Creation Flow
+### 3.2 AI Generate Flashcards Flow
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       COURSE CREATION FLOW                                    │
-└─────────────────────────────────────────────────────────────────────────────┘
++------------------------------------------------------------------+
+|                  AI GENERATE FLASHCARDS FLOW                       |
++------------------------------------------------------------------+
 
-User                    Frontend                 Backend                 Database
-  │                         │                        │                       │
-  │  1. Click "Create Course"│                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │  2. Fill form:          │                        │                       │
-  │  - Title                 │                        │                       │
-  │  - Description           │                        │                       │
-  │  - Category              │                        │                       │
-  │  - Level                 │                        │                       │
-  │  - Thumbnail             │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  3. POST /api/courses  │                       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  4. Validate data    │
-  │                         │                        │                       │
-  │                         │                        │  5. Create course    │
-  │                         │                        │  creator_id = user.id │
-  │                         │                        │  is_published = false │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  6. Return course      │                       │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  7. Redirect to course detail                    │                       │
-  │ ◀────────────────────── │                        │                       │
+User          Frontend       Backend       AIService      RAGService    Database
+  |               |             |               |               |            |
+  | 1. View doc   |             |               |               |            |
+  | ------------->|             |               |               |            |
+  |               |             |               |               |            |
+  | 2. Click      |             |               |               |            |
+  |    "Generate" |             |               |               |            |
+  | ------------->|             |               |               |            |
+  |               | 3. POST /api/v1/ai/generate-flashcards      |            |
+  |               | ------------>|               |               |            |
+  |               |             | 4. Get doc    |               |            |
+  |               |             |    content    |               |            |
+  |               |             | ------------->|               |            |
+  |               |             |               | 5. Query RAG  |            |
+  |               |             |               | ------------->|            |
+  |               |             |               | <-------------|            |
+  |               |             |               |               |            |
+  |               |             |               | 6. Call Claude|            |
+  |               |             |               |    API        |            |
+  |               |             |               |               |            |
+  |               |             |               | 7. Parse JSON |            |
+  |               |             |               |    response   |            |
+  |               |             | <-------------|               |            |
+  |               |             |               |               |            |
+  |               |             | 8. Save flashcards            |            |
+  |               |             | ------------------------------|----------->|
+  |               |             |               |               |            |
+  |               | 9. Return flashcards        |               |            |
+  |               | <-----------|               |               |            |
+  | 10. Display   |             |               |               |            |
+  | <-------------|             |               |               |            |
+  |               |             |               |               |            |
 ```
 
-**Course Data:**
-```json
-{
-  "title": "Python cơ bản",
-  "description": "Học Python từ con số 0",
-  "category_id": 1,
-  "level": "beginner",
-  "duration_hours": 20,
-  "thumbnail": "https://..."
-}
-```
-
----
-
-### 2.2 Course Enrollment Flow
+### 3.3 Review Flashcard Flow (SRS)
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       COURSE ENROLLMENT FLOW                                  │
-└─────────────────────────────────────────────────────────────────────────────┘
++------------------------------------------------------------------+
+|                    FLASHCARD REVIEW FLOW (SRS)                     |
++------------------------------------------------------------------+
 
-User                    Frontend                 Backend                 Database
-  │                         │                        │                       │
-  │  1. View course detail  │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │  2. Click "Enroll"      │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  3. POST /api/courses/:id/enroll                │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  4. Check not already enrolled
-  │                         │                        │                       │
-  │                         │                        │  5. Create enrollment│
-  │                         │                        │  - user_id            │
-  │                         │                        │  - course_id          │
-  │                         │                        │  - enrolled_at = now  │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  6. Update course    │
-  │                         │                        │  enrolled_count++     │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  7. Return success     │                       │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  8. Show "Continue Learning" button             │                       │
-  │ ◀────────────────────── │                        │                       │
+User          Frontend       Backend       SRSService      Database
+  |               |             |               |               |
+  | 1. Start      |             |               |               |
+  |    review     |             |               |               |
+  | ------------->|             |               |               |
+  |               | 2. GET /api/v1/flashcards/due              |
+  |               | ------------>|               |               |
+  |               |             | 3. Get due    |               |
+  |               |             |    cards      |               |
+  |               |             | ------------->|               |
+  |               |             |               | 4. Query      |
+  |               |             |               |    due cards  |
+  |               |             |               | ------------->|
+  |               |             |               | <-------------|
+  |               |             | <-------------|               |
+  |               | 5. Return due cards         |               |
+  |               | <-----------|               |               |
+  | 6. Show card  |             |               |               |
+  | <-------------|             |               |               |
+  |               |             |               |               |
+  | 7. Rate       |             |               |               |
+  |    (0-5)      |             |               |               |
+  | ------------->|             |               |               |
+  |               | 8. POST /api/v1/flashcards/:id/review       |
+  |               | ------------>|               |               |
+  |               |             | 9. Apply SM-2 |               |
+  |               |             |    algorithm  |               |
+  |               |             | ------------->|               |
+  |               |             |               | 10. Update    |
+  |               |             |               |     review    |
+  |               |             |               | ------------->|
+  |               |             |               |               |
+  |               |             |               | 11. Calculate |
+  |               |             |               |     next review
+  |               |             | <-------------|               |
+  |               | 12. Return updated state    |               |
+  |               | <-----------|               |               |
+  | 13. Next card |             |               |               |
+  | <-------------|             |               |               |
+  |               |             |               |               |
 ```
 
----
+### 3.4 API Calls
 
-### 2.3 Course Publishing Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       COURSE PUBLISHING FLOW                                  │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-Creator                 Frontend                 Backend                 Database
-  │                         │                        │                       │
-  │  1. Click "Publish"     │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  2. Validation:        │                       │
-  │                         │  - Has at least 1 lesson│                       │
-  │                         │  - All lessons have content                    │
-  │                         │  - Thumbnail uploaded   │                       │
-  │                         │                        │                       │
-  │                         │  3. PUT /api/courses/:id                        │
-  │                         │  { is_published: true } │                       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  4. Check ownership  │
-  │                         │                        │  (creator or admin)  │
-  │                         │                        │                       │
-  │                         │                        │  5. Update course    │
-  │                         │                        │  is_published = true │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  6. Return updated course                      │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  7. Show "Published" badge                        │                       │
-  │ ◀────────────────────── │                        │                       │
-```
-
----
-
-## 3. LESSON FLOW
-
-### 3.1 Lesson Learning Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        LESSON LEARNING FLOW                                   │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-User                    Frontend                 Backend                 Database
-  │                         │                        │                       │
-  │  1. Click lesson        │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  2. GET /api/lessons/:id                       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  3. Check enrollment │
-  │                         │                        │                       │
-  │                         │  4. Return lesson + progress                    │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  5. Display:            │                        │                       │
-  │  - Video player         │                        │                       │
-  │  - Lesson content       │                        │                       │
-  │  - Notes panel          │                        │                       │
-  │  - AI summary           │                        │                       │
-  │ ◀────────────────────── │                        │                       │
-  │                         │                        │                       │
-  │  6. Watch video         │                        │                       │
-  │  (track progress)       │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  7. PUT /api/lesson-completions                 │
-  │                         │  { lesson_id, completed: true, time_spent }      │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  8. Update progress  │
-  │                         │                        │  - completed = true  │
-  │                         │                        │  - time_spent += X   │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  9. Update course progress
-  │                         │                        │  (recalculate %)     │
-  │                         │                        │ ─────────────────────▶│
-```
+| Step | Method | Endpoint | Description |
+|------|--------|----------|-------------|
+| 1 | GET | `/api/v1/documents/:id/flashcards` | Lay flashcards theo tai lieu |
+| 2 | GET | `/api/v1/flashcards/due` | Lay flashcards can on hom nay |
+| 3 | POST | `/api/v1/flashcards/:id/review` | Gui ket qua on tap |
+| 4 | GET | `/api/v1/flashcards/progress` | Lay tien do on tap |
+| 5 | POST | `/api/v1/flashcards/:id/reset` | Reset tien do flashcard |
+| 6 | POST | `/api/v1/documents/:id/flashcards` | Tao flashcard thu cong |
+| 7 | POST | `/api/v1/ai/generate-flashcards` | AI tao flashcard |
 
 ---
 
 ## 4. QUIZ FLOW
 
-### 4.1 Quiz Taking Flow
+### 4.1 Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          QUIZ TAKING FLOW                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
+View Document --> Generate Quiz (AI) --> Take Quiz -->
+Submit Answers --> Calculate Score --> View Results
+```
+
+### 4.2 AI Generate Quiz Flow
+
+```
++------------------------------------------------------------------+
+|                      AI GENERATE QUIZ FLOW                         |
++------------------------------------------------------------------+
+
+User          Frontend       Backend       AIService      RAGService    Database
+  |               |             |               |               |            |
+  | 1. View doc   |             |               |               |            |
+  | ------------->|             |               |               |            |
+  |               |             |               |               |            |
+  | 2. Click      |             |               |               |            |
+  |    "Generate  |             |               |               |            |
+  |    Quiz"      |             |               |               |            |
+  | ------------->|             |               |               |            |
+  |               | 3. POST /api/v1/ai/generate-quiz            |            |
+  |               | ------------>|               |               |            |
+  |               |             | 4. Get doc    |               |            |
+  |               |             |    content    |               |            |
+  |               |             | ------------->|               |            |
+  |               |             |               | 5. Query RAG  |            |
+  |               |             |               | ------------->|            |
+  |               |             |               | <-------------|            |
+  |               |             |               |               |            |
+  |               |             |               | 6. Call Claude|            |
+  |               |             |               |    with prompt|            |
+  |               |             |               |               |            |
+  |               |             |               | 7. Parse JSON |            |
+  |               |             |               |    (questions)|
+  |               |             | <-------------|               |            |
+  |               |             |               |               |            |
+  |               |             | 8. Save quiz  |               |            |
+  |               |             |    + questions|               |            |
+  |               |             | ------------------------------|----------->|
+  |               |             |               |               |            |
+  |               | 9. Return quiz              |               |            |
+  |               | <-----------|               |               |            |
+  | 10. Display   |             |               |               |            |
+  | <-------------|             |               |               |            |
+  |               |             |               |               |            |
+```
+
+### 4.3 Take Quiz Flow
+
+```
++------------------------------------------------------------------+
+|                        TAKE QUIZ FLOW                              |
++------------------------------------------------------------------+
+
+User          Frontend       Backend       QuizService      Database
+  |               |             |               |                |
+  | 1. Start quiz |             |               |                |
+  | ------------->|             |               |                |
+  |               | 2. POST /api/v1/quizzes/:id/start           |
+  |               | ------------>|               |                |
+  |               |             | 3. Create     |                |
+  |               |             |    attempt    |                |
+  |               |             | ------------->|                |
+  |               |             |               | 4. Insert      |
+  |               |             |               |    attempt     |
+  |               |             |               | -------------->|
+  |               |             |               |                |
+  |               |             | 5. Get questions              |
+  |               |             |    (shuffle if enabled)       |
+  |               |             | ------------->|                |
+  |               |             |               | 6. Query       |
+  |               |             |               |    questions   |
+  |               |             |               | -------------->|
+  |               |             |               | <--------------|
+  |               |             | <-------------|                |
+  |               | 7. Return questions         |                |
+  |               |    (without correct answers)|                |
+  |               | <-----------|               |                |
+  | 8. Display    |             |               |                |
+  |    questions  |             |               |                |
+  | <-------------|             |               |                |
+  |               |             |               |                |
+  | 9. Answer     |             |               |                |
+  |    questions  |             |               |                |
+  | ------------->|             |               |                |
+  |               |             |               |                |
+  | 10. Submit    |             |               |                |
+  | ------------->|             |               |                |
+  |               | 11. POST /api/v1/attempts/:id/submit        |
+  |               | ------------>|               |                |
+  |               |             | 12. Calculate |                |
+  |               |             |     score     |                |
+  |               |             | ------------->|                |
+  |               |             |               | 13. Update     |
+  |               |             |               |     attempt    |
+  |               |             |               | -------------->|
+  |               |             | <-------------|                |
+  |               | 14. Return results          |                |
+  |               |     (with explanations)     |                |
+  |               | <-----------|               |                |
+  | 15. Show      |             |               |                |
+  |     results   |             |               |                |
+  | <-------------|             |               |                |
+  |               |             |               |                |
+```
+
+### 4.4 API Calls
+
+| Step | Method | Endpoint | Description |
+|------|--------|----------|-------------|
+| 1 | GET | `/api/v1/documents/:id/quiz` | Lay quiz theo tai lieu |
+| 2 | POST | `/api/v1/quizzes/:id/start` | Bat dau lam quiz |
+| 3 | POST | `/api/v1/attempts/:id/answer` | Luu cau tra loi |
+| 4 | POST | `/api/v1/attempts/:id/submit` | Nop bai quiz |
+| 5 | GET | `/api/v1/attempts/:id` | Xem ket qua |
+| 6 | GET | `/api/v1/quizzes/:id/attempts` | Xem lich su lam bai |
+| 7 | POST | `/api/v1/ai/generate-quiz` | AI tao quiz |
+
+---
+
+## 5. AI CHAT FLOW (RAG)
+
+### 5.1 Overview
+
+```
+Select Document --> Create/Open Session --> Send Message -->
+RAG Query --> AI Response --> Display
+```
+
+### 5.2 Chat Flow with RAG
+
+```
++------------------------------------------------------------------+
+|                     AI CHAT FLOW (RAG)                             |
++------------------------------------------------------------------+
+
+User          Frontend       Backend       ChatService     RAGService    ClaudeAPI
+  |               |             |               |               |            |
+  | 1. Select doc |             |               |               |            |
+  | ------------->|             |               |               |            |
+  |               |             |               |               |            |
+  | 2. Create/    |             |               |               |            |
+  |    open chat  |             |               |               |            |
+  | ------------->|             |               |               |            |
+  |               | 3. POST /api/v1/chat/sessions              |            |
+  |               | ------------>|               |               |            |
+  |               |             | 4. Create     |               |            |
+  |               |             |    session    |               |            |
+  |               |             | ------------->|               |            |
+  |               | 5. Return session           |               |            |
+  |               | <-----------|               |               |            |
+  |               |             |               |               |            |
+  | 6. Send       |             |               |               |            |
+  |    message    |             |               |               |            |
+  | ------------->|             |               |               |            |
+  |               | 7. POST /api/v1/chat/sessions/:id/messages  |            |
+  |               | ------------>|               |               |            |
+  |               |             | 8. Save user  |               |            |
+  |               |             |    message    |               |            |
+  |               |             | ------------->|               |            |
+  |               |             |               |               |            |
+  |               |             | 9. Get chat   |               |            |
+  |               |             |    history    |               |            |
+  |               |             | ------------->|               |            |
+  |               |             |               |               |            |
+  |               |             | 10. Query RAG |               |            |
+  |               |             |    for context|               |            |
+  |               |             | ------------->|               |            |
+  |               |             |               | 11. Embed     |            |
+  |               |             |               |     query     |            |
+  |               |             |               | ------------->|            |
+  |               |             |               | 12. Semantic  |            |
+  |               |             |               |     search    |            |
+  |               |             |               | ------------->| ChromaDB   |
+  |               |             |               | <-------------|            |
+  |               |             | <-------------|               |            |
+  |               |             |               |               |            |
+  |               |             | 13. Build prompt with context |            |
+  |               |             | ------------->|               |            |
+  |               |             |               | 14. Call      |            |
+  |               |             |               |     Claude    |            |
+  |               |             |               | ------------->|            |
+  |               |             |               | <-------------|            |
+  |               |             | <-------------|               |            |
+  |               |             |               |               |            |
+  |               |             | 15. Save AI   |               |            |
+  |               |             |     response  |               |            |
+  |               |             | ------------->|               |            |
+  |               | 16. Return response        |               |            |
+  |               | <-----------|               |               |            |
+  | 17. Display   |             |               |               |            |
+  |     response  |             |               |               |            |
+  | <-------------|             |               |               |            |
+  |               |             |               |               |            |
+```
+
+### 5.3 API Calls
+
+| Step | Method | Endpoint | Description |
+|------|--------|----------|-------------|
+| 1 | GET | `/api/v1/chat/sessions` | Lay danh sach phien chat |
+| 2 | POST | `/api/v1/chat/sessions` | Tao phien chat moi |
+| 3 | GET | `/api/v1/chat/sessions/:id` | Lay chi tiet phien chat |
+| 4 | POST | `/api/v1/chat/sessions/:id/messages` | Gui tin nhan |
+| 5 | DELETE | `/api/v1/chat/sessions/:id` | Xoa phien chat |
+| 6 | PUT | `/api/v1/chat/sessions/:id` | Cap nhat tieu de |
+
+---
+
+## 6. NOTES FLOW
+
+### 6.1 Overview
+
+```
+View Document --> Create Note --> Save --> Edit/Delete
+```
+
+### 6.2 Notes Flow
+
+```
++------------------------------------------------------------------+
+|                          NOTES FLOW                                |
++------------------------------------------------------------------+
 
 User                    Frontend                 Backend                 Database
-  │                         │                        │                       │
-  │  1. Start quiz          │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  2. GET /api/quizzes/:id                        │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  3. Check enrollment │
-  │                         │                        │  Check attempts left │
-  │                         │                        │                       │
-  │                         │  4. Return quiz + questions (without answers)   │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  5. Display quiz UI:    │                        │                       │
-  │  - Timer (if time_limit)│                        │                       │
-  │  - Questions            │                        │                       │
-  │  - Progress indicator   │                        │                       │
-  │ ◀────────────────────── │                        │                       │
-  │                         │                        │                       │
-  │  6. Answer questions    │                        │                       │
-  │  (local state)          │                        │                       │
-  │                         │                        │                       │
-  │  7. Submit quiz         │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  8. POST /api/quizzes/:id/submit                 │
-  │                         │  { answers: [...] }    │                       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  9. Create attempt   │
-  │                         │                        │  - user_id           │
-  │                         │                        │  - quiz_id           │
-  │                         │                        │  - answers (JSON)    │
-  │                         │                        │  - started_at        │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  10. Calculate score │
-  │                         │                        │  (compare with correct answers)
-  │                         │                        │                       │
-  │                         │                        │  11. Update attempt  │
-  │                         │                        │  - score             │
-  │                         │                        │  - passed (score >= passing_score)
-  │                         │                        │  - completed_at      │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  12. Return result     │                       │
-  │                         │  { score, passed, correct_answers, explanations }│
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  13. Show result screen │                        │                       │
-  │  - Score                │                        │                       │
-  │  - Pass/Fail            │                        │                       │
-  │  - Review answers       │                        │                       │
-  │ ◀────────────────────── │                        │                       │
+  |                         |                        |                       |
+  | 1. View document        |                        |                       |
+  | ----------------------> |                        |                       |
+  |                         |                        |                       |
+  | 2. Click "Add Note"     |                        |                       |
+  | ----------------------> |                        |                       |
+  |                         |                        |                       |
+  | 3. Enter note content   |                        |                       |
+  |    + page number        |                        |                       |
+  | ----------------------> |                        |                       |
+  |                         | 4. POST /api/v1/documents/:id/notes            |
+  |                         | ----------------------> |                       |
+  |                         |                        | 5. Validate & save    |
+  |                         |                        | ---------------------->|
+  |                         |                        | <----------------------|
+  |                         | 6. Return created note |                       |
+  |                         | <---------------------- |                       |
+  | 7. Display note         |                        |                       |
+  | <---------------------- |                        |                       |
+  |                         |                        |                       |
 ```
 
-**Quiz Answer Format:**
-```json
-{
-  "answers": [
-    {
-      "question_id": 1,
-      "answer_ids": [2]
-    },
-    {
-      "question_id": 2,
-      "answer_ids": [1, 3]
-    }
-  ]
-}
-```
+### 6.3 API Calls
+
+| Step | Method | Endpoint | Description |
+|------|--------|----------|-------------|
+| 1 | GET | `/api/v1/notes` | Lay danh sach ghi chu |
+| 2 | GET | `/api/v1/documents/:id/notes` | Lay ghi chu theo tai lieu |
+| 3 | POST | `/api/v1/documents/:id/notes` | Tao ghi chu moi |
+| 4 | PUT | `/api/v1/notes/:id` | Cap nhat ghi chu |
+| 5 | DELETE | `/api/v1/notes/:id` | Xoa ghi chu |
+| 6 | GET | `/api/v1/notes/search` | Tim kiem ghi chu |
 
 ---
 
-## 5. EXERCISE FLOW
+## 7. BOOKMARK FLOW
 
-### 5.1 Exercise Submission & AI Grading Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    EXERCISE SUBMISSION FLOW                                   │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-User                    Frontend                 Backend                 AI Service
-  │                         │                        │                       │
-  │  1. View exercise       │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  2. GET /api/exercises/:id                      │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │  3. Return exercise details                     │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  4. Submit answer:      │                        │                       │
-  │  - Text answer          │                        │                       │
-  │  - File upload (optional)│                       │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  5. POST /api/exercises/:id/submit              │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  6. Create submission│
-  │                         │                        │  status = "grading"  │
-  │                         │                        │                       │
-  │                         │                        │  7. POST /api/ai/grade-submission
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  8. Build prompt:    │
-  │                         │                        │  - Exercise desc     │
-  │                         │                        │  - Grading criteria  │
-  │                         │                        │  - User answer       │
-  │                         │                        │                       │
-  │                         │                        │  9. Return AI feedback
-  │                         │                        │ ◀─────────────────────│
-  │                         │                        │  { score, strengths, improvements }
-  │                         │                        │                       │
-  │                         │                        │  10. Update submission│
-  │                         │                        │  - score             │
-  │                         │                        │  - ai_feedback (JSON)│
-  │                         │                        │  - status = "graded" │
-  │                         │                        │  - graded_at = now   │
-  │                         │                        │                       │
-  │                         │  11. Return submission with feedback             │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  12. Display feedback:  │                        │                       │
-  │  - Score                │                        │                       │
-  │  - Overall comment      │                        │                       │
-  │  - Strengths            │                        │                       │
-  │  - Improvements         │                        │                       │
-  │  - Suggestions          │                        │                       │
-  │ ◀────────────────────── │                        │                       │
-```
-
----
-
-## 6. FLASHCARD FLOW (Spaced Repetition)
-
-### 6.1 Flashcard Review Flow
+### 7.1 Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                     FLASHCARD REVIEW FLOW (SRS)                               │
-└─────────────────────────────────────────────────────────────────────────────┘
+View Document --> Add Bookmark --> View Bookmarks --> Remove
+```
+
+### 7.2 Bookmark Flow
+
+```
++------------------------------------------------------------------+
+|                        BOOKMARK FLOW                               |
++------------------------------------------------------------------+
 
 User                    Frontend                 Backend                 Database
-  │                         │                        │                       │
-  │  1. Start review session│                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  2. GET /api/flashcards/review                  │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  3. Query cards due today
-  │                         │                        │  WHERE next_review_at <= NOW
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  4. Return cards + stats                        │
-  │                         │  { items, total_due, total_new, total_review }  │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  5. Show first card:    │                        │                       │
-  │  [Front side visible]   │                        │                       │
-  │ ◀────────────────────── │                        │                       │
-  │                         │                        │                       │
-  │  6. Click to flip       │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │  7. Show back side      │                        │                       │
-  │  + Rating buttons (0-5) │                        │                       │
-  │ ◀────────────────────── │                        │                       │
-  │                         │                        │                       │
-  │  8. Rate card (0-5)     │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  9. POST /api/flashcards/:id/review              │
-  │                         │  { quality: 4 }        │                       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  10. SM-2 Algorithm: │
-  │                         │                        │                       │
-  │                         │                        │  IF quality < 3:      │
-  │                         │                        │    repetitions = 0    │
-  │                         │                        │    interval = 1       │
-  │                         │                        │  ELSE:               │
-  │                         │                        │    repetitions++      │
-  │                         │                        │    IF repetitions == 1:│
-  │                         │                        │      interval = 1     │
-  │                         │                        │    IF repetitions == 2:│
-  │                         │                        │      interval = 6     │
-  │                         │                        │    ELSE:             │
-  │                         │                        │      interval *= ease_factor
-  │                         │                        │                       │
-  │                         │                        │  ease_factor = ease_factor +
-  │                         │                        │    (0.1 - (5-quality)*(0.08+(5-quality)*0.02))
-  │                         │                        │                       │
-  │                         │                        │  next_review_at = NOW + interval days
-  │                         │                        │                       │
-  │                         │                        │  11. Update flashcard_reviews
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  12. Return { next_review_at, interval, cards_remaining }
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  13. Show next card     │                        │                       │
-  │  (or completion screen) │                        │                       │
-  │ ◀────────────────────── │                        │                       │
+  |                         |                        |                       |
+  | 1. View document        |                        |                       |
+  | ----------------------> |                        |                       |
+  |                         |                        |                       |
+  | 2. Click "Bookmark"     |                        |                       |
+  | ----------------------> |                        |                       |
+  |                         | 3. POST /api/v1/documents/:id/bookmark         |
+  |                         | ----------------------> |                       |
+  |                         |                        | 4. Check existing     |
+  |                         |                        | ---------------------->|
+  |                         |                        | <----------------------|
+  |                         |                        |                       |
+  |                         |                        | 5. Create bookmark    |
+  |                         |                        | ---------------------->|
+  |                         |                        | <----------------------|
+  |                         | 6. Return bookmark     |                       |
+  |                         | <---------------------- |                       |
+  | 7. Show bookmarked      |                        |                       |
+  | <---------------------- |                        |                       |
+  |                         |                        |                       |
 ```
 
-**SM-2 Quality Scale:**
-| Rating | Meaning | Effect |
-|--------|---------|--------|
-| 0 | Complete blackout | Reset to 0, interval = 1 day |
-| 1 | Incorrect, recognized | Reset to 0, interval = 1 day |
-| 2 | Incorrect, easy recall | Reset to 0, interval = 1 day |
-| 3 | Correct with difficulty | Continue, increase interval |
-| 4 | Correct after hesitation | Continue, increase interval |
-| 5 | Perfect response | Continue, increase interval |
+### 7.3 API Calls
+
+| Step | Method | Endpoint | Description |
+|------|--------|----------|-------------|
+| 1 | GET | `/api/v1/bookmarks` | Lay danh sach bookmark |
+| 2 | POST | `/api/v1/documents/:id/bookmark` | Them bookmark |
+| 3 | PUT | `/api/v1/bookmarks/:id` | Cap nhat bookmark |
+| 4 | DELETE | `/api/v1/documents/:id/bookmark` | Xoa bookmark |
+| 5 | GET | `/api/v1/documents/:id/bookmark` | Kiem tra trang thai bookmark |
 
 ---
 
-## 7. AI CHAT FLOW
+## 8. RAG QUERY FLOW
 
-### 7.1 AI Conversation Flow
+### 8.1 Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        AI CHAT FLOW                                          │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-User                    Frontend                 Backend                 AI Service
-  │                         │                        │                       │
-  │  1. Open AI Tutor       │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  2. GET /api/chat/ai/conversations               │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │  3. Return conversation list                     │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  4. Select/Create conversation                   │                       │
-  │  - Select course context │                       │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  5. POST /api/chat/ai/conversations              │
-  │                         │  { course_id, context_type }                    │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │  6. Create conversation│                       │
-  │                         │ ─────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │  7. Return conversation                         │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  8. Send message        │                        │                       │
-  │  "Variable là gì?"      │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  9. POST /api/chat/ai/conversations/:id/messages │
-  │                         │  { content: "..." }    │                       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  10. Save user message│
-  │                         │                        │  role = "user"       │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  11. Build context:  │
-  │                         │                        │  - System prompt     │
-  │                         │                        │  - Course info       │
-  │                         │                        │  - Recent messages   │
-  │                         │                        │                       │
-  │                         │                        │  12. Call Claude API │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  13. Stream response │
-  │                         │                        │ ◀─────────────────────│
-  │                         │                        │                       │
-  │                         │                        │  14. Save AI message │
-  │                         │                        │  role = "assistant"  │
-  │                         │                        │  tokens_used = X     │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  15. Stream to frontend                         │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  16. Display AI response│                        │                       │
-  │  (markdown rendered)    │                        │                       │
-  │ ◀────────────────────── │                        │                       │
+Query --> Embed Query --> Semantic Search --> Retrieve Chunks -->
+Build Context --> Return Results
 ```
+
+### 8.2 RAG Query Flow
+
+```
++------------------------------------------------------------------+
+|                       RAG QUERY FLOW                               |
++------------------------------------------------------------------+
+
+Service              RAGService            EmbeddingModel         ChromaDB
+  |                       |                      |                    |
+  | 1. Query with text    |                      |                    |
+  | ---------------------->|                      |                    |
+  |                       | 2. Embed query       |                    |
+  |                       | -------------------->|                    |
+  |                       | <--------------------|                    |
+  |                       | 3. Return embedding  |                    |
+  |                       |                      |                    |
+  |                       | 4. Semantic search   |                    |
+  |                       | -------------------->|                    |
+  |                       |                      | 5. Query vectors   |
+  |                       |                      | ------------------>|
+  |                       |                      | <------------------|
+  |                       | 6. Return chunks     |                    |
+  |                       | <--------------------|                    |
+  |                       |                      |                    |
+  |                       | 7. Build context     |                    |
+  |                       |    (top-k chunks)    |                    |
+  | 8. Return context     |                      |                    |
+  | <----------------------|                      |                    |
+  |                       |                      |                    |
+```
+
+### 8.3 RAG Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| chunk_size | 1000 | Ky tu moi chunk |
+| chunk_overlap | 200 | Ky tu overlap giua cac chunk |
+| embedding_dims | 768 | So chieu embedding vector |
+| top_k | 5 | So chunks lay ve |
+| min_similarity | 0.7 | Nguong tuong dong toi thieu |
 
 ---
 
-## 8. AI SERVICES FLOW
+## 9. SRS ALGORITHM FLOW (SM-2)
 
-### 8.1 AI Generate Quiz Flow
+### 9.1 Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      AI GENERATE QUIZ FLOW                                    │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-User                    Frontend                 Backend                 AI Service
-  │                         │                        │                       │
-  │  1. Click "AI Generate Quiz"                    │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │  2. Select options:     │                        │                       │
-  │  - Number of questions   │                       │                       │
-  │  - Difficulty level      │                       │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  3. POST /api/ai/generate-quiz                  │
-  │                         │  { lesson_id, num_questions, difficulty }       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  4. Get lesson content
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  5. Build prompt:    │
-  │                         │                        │  - Lesson content    │
-  │                         │                        │  - Quiz requirements │
-  │                         │                        │  - JSON format spec  │
-  │                         │                        │                       │
-  │                         │                        │  6. Call Claude API  │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  7. Parse JSON response
-  │                         │                        │ ◀─────────────────────│
-  │                         │                        │                       │
-  │                         │                        │  8. Create Quiz      │
-  │                         │                        │  - Create Questions  │
-  │                         │                        │  - Create Answers    │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  9. Log AI generation│
-  │                         │                        │  (ai_quiz_generations)│
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  10. Return created quiz with questions          │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  11. Preview & Edit quiz │                        │                       │
-  │  (can modify before saving)                      │                       │
-  │ ◀────────────────────── │                        │                       │
+Review Card --> Rate Quality (0-5) --> Calculate Interval -->
+Update Ease Factor --> Schedule Next Review
 ```
+
+### 9.2 SM-2 Algorithm Flow
+
+```
++------------------------------------------------------------------+
+|                    SM-2 ALGORITHM FLOW                             |
++------------------------------------------------------------------+
+
+                          SRSService
+                              |
+                              v
+                    +-------------------+
+                    | Get current state |
+                    | (ease, interval,  |
+                    |  repetitions)     |
+                    +---------+---------+
+                              |
+                              v
+                    +-------------------+
+                    | User rates 0-5    |
+                    +---------+---------+
+                              |
+              +---------------+---------------+
+              |                               |
+              v                               v
+      +---------------+               +---------------+
+      | quality < 3   |               | quality >= 3  |
+      | (FAILED)      |               | (PASSED)      |
+      +-------+-------+               +-------+-------+
+              |                               |
+              v                               v
+      +---------------+               +---------------+
+      | interval = 1  |               | repetitions++ |
+      | repetitions=0 |               +-------+-------+
+      +-------+-------+                       |
+              |                       +-------+-------+
+              |                       |               |
+              |               +-------+       +-------+
+              |               | rep=1 |       | rep=2 |
+              |               +-------+       +-------+
+              |                   |               |
+              |                   v               v
+              |           +-----------+   +---------------+
+              |           | interval=1|   | interval=6    |
+              |           +-----------+   +---------------+
+              |                   |               |
+              |                   +-------+-------+
+              |                           |
+              |                   +-------+-------+
+              |                   | rep > 2       |
+              |                   +-------+-------+
+              |                           |
+              |                           v
+              |                   +---------------+
+              |                   | interval =    |
+              |                   | prev * ease   |
+              |                   +---------------+
+              |                           |
+              +-------------+-------------+
+                            |
+                            v
+                    +---------------+
+                    | Update ease   |
+                    | factor:       |
+                    | EF = EF +     |
+                    | 0.1 - (5-q) * |
+                    | (0.08 +       |
+                    |  (5-q)*0.02)  |
+                    +-------+-------+
+                            |
+                            v
+                    +---------------+
+                    | next_review = |
+                    | now + interval|
+                    | days          |
+                    +---------------+
+```
+
+### 9.3 Quality Rating
+
+| Quality | Meaning | Effect |
+|---------|---------|--------|
+| 0 | Complete blackout | Reset interval |
+| 1 | Incorrect, recognized | Reset interval |
+| 2 | Incorrect, easy recall | Reset interval |
+| 3 | Correct with difficulty | Slight increase |
+| 4 | Correct after hesitation | Normal increase |
+| 5 | Perfect response | Maximum increase |
+
+### 9.4 SM-2 Parameters
+
+| Parameter | Default | Min | Description |
+|-----------|---------|-----|-------------|
+| ease_factor | 2.5 | 1.3 | He so de |
+| interval | 1 | 1 | Khoang cach (ngay) |
+| repetitions | 0 | 0 | So lan dung lien tiep |
 
 ---
 
-### 8.2 AI Summarize Flow
+## 10. MESSAGE QUEUE FLOW
+
+### 10.1 Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       AI SUMMARIZE FLOW                                       │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-User                    Frontend                 Backend                 AI Service
-  │                         │                        │                       │
-  │  1. View lesson         │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │  2. Click "AI Summary"  │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  3. POST /api/ai/summarize                      │
-  │                         │  { lesson_id, length } │                       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  4. Check cache first│
-  │                         │                        │  (Redis: summary:lesson_id:length)
-  │                         │                        │                       │
-  │                         │                        │  5. If cached, return│
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │                         │                        │  6. If not cached:   │
-  │                         │                        │  Get lesson content  │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  7. Build prompt     │
-  │                         │                        │  - Content to summarize
-  │                         │                        │  - Length requirement│
-  │                         │                        │  - Key points format │
-  │                         │                        │                       │
-  │                         │                        │  8. Call Claude API  │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  9. Parse response   │
-  │                         │                        │ ◀─────────────────────│
-  │                         │                        │                       │
-  │                         │                        │  10. Save to DB      │
-  │                         │                        │  (ai_summaries)      │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  11. Cache result    │
-  │                         │                        │  (TTL: 7 days)       │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  12. Return summary    │                       │
-  │                         │  { summary, key_points, keywords }             │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  13. Display summary panel                      │                       │
-  │  - Summary text         │                        │                       │
-  │  - Key points list      │                        │                       │
-  │  - Keywords tags        │                        │                       │
-  │ ◀────────────────────── │                        │                       │
+API Request --> Queue Task --> Return Task ID --> Worker Process -->
+Update Status --> Notify Client
 ```
+
+### 10.2 Async Task Processing Flow
+
+```
++------------------------------------------------------------------+
+|                  ASYNC TASK PROCESSING FLOW                        |
++------------------------------------------------------------------+
+
+API                 TaskQueue            Worker              Database
+  |                     |                    |                    |
+  | 1. Receive request  |                    |                    |
+  | ------------------- |                    |                    |
+  |                     |                    |                    |
+  | 2. Create task      |                    |                    |
+  | ------------------->|                    |                    |
+  |                     | 3. Store task      |                    |
+  |                     | ------------------ | ------------------>|
+  |                     |                    |                    |
+  | 4. Return task_id   |                    |                    |
+  | <-------------------|                    |                    |
+  |                     |                    |                    |
+  |                     | 5. Worker picks    |                    |
+  |                     |    task            |                    |
+  |                     | ------------------ >|                   |
+  |                     |                    |                    |
+  |                     |                    | 6. Process task    |
+  |                     |                    | ------------------ |
+  |                     |                    |                    |
+  |                     |                    | 7. Update status   |
+  |                     |                    | ------------------>|
+  |                     |                    |                    |
+  | 8. Client polls     |                    |                    |
+  |    status           |                    |                    |
+  | ------------------- | ------------------ | ------------------>|
+  | 9. Return status    |                    |                    |
+  | <------------------ | <----------------- | <------------------|
+  |                     |                    |                    |
+```
+
+### 10.3 Task Types
+
+| Queue | Tasks | Description |
+|-------|-------|-------------|
+| document_processing | PDF/DOCX processing | Extract text, chunk, embed |
+| ai_generation | Quiz, Flashcard, Summary | AI generation tasks |
 
 ---
 
-## 9. PROGRESS TRACKING FLOW
+## Tong Ket API Endpoints
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       PROGRESS TRACKING FLOW                                  │
-└─────────────────────────────────────────────────────────────────────────────┘
+| Module | Endpoints | Description |
+|--------|-----------|-------------|
+| Auth | 8 | Dang ky, dang nhap, quan ly tai khoan |
+| Documents | 6 | Upload, quan ly tai lieu |
+| Flashcards | 7 | Tao, on tap flashcard |
+| Quiz | 7 | Tao, lam quiz |
+| AI Chat | 6 | Chat voi AI Tutor |
+| Notes | 6 | Ghi chu ca nhan |
+| Bookmarks | 5 | Danh dau tai lieu |
+| AI Services | 4 | Generate quiz, flashcard, summary |
 
-User                    Frontend                 Backend                 Database
-  │                         │                        │                       │
-  │  1. View Dashboard      │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  2. GET /api/learning-progress                  │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  3. Aggregate data:  │
-  │                         │                        │                       │
-  │                         │                        │  FROM enrollments:   │
-  │                         │                        │  - total_courses     │
-  │                         │                        │  - completed_courses │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  FROM user_progress: │
-  │                         │                        │  - total_lessons     │
-  │                         │                        │  - completed_lessons │
-  │                         │                        │  - total_time_spent  │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  FROM quiz_attempts: │
-  │                         │                        │  - average_score     │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  FROM flashcard_reviews:
-  │                         │                        │  - flashcards stats  │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  4. Return aggregated progress                  │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  5. Display stats:      │                        │                       │
-  │  - Courses enrolled     │                        │                       │
-  │  - Lessons completed    │                        │                       │
-  │  - Learning hours       │                        │                       │
-  │  - Average quiz score   │                        │                       │
-  │  - Flashcard progress   │                        │                       │
-  │  - Streak days          │                        │                       │
-  │ ◀────────────────────── │                        │                       │
-```
+**Total: 49 API Endpoints**
 
 ---
 
-## 10. ADMIN FLOW
+## Database Tables
 
-### 10.1 User Management Flow
+| Table | Mo ta |
+|-------|-------|
+| users | Nguoi dung |
+| documents | Tai lieu upload |
+| document_chunks | Chunks cho RAG |
+| flashcards | Flashcard |
+| flashcard_reviews | Lich su on tap flashcard |
+| quizzes | Quiz |
+| quiz_questions | Cau hoi quiz |
+| quiz_answers | Dap an quiz |
+| quiz_attempts | Lan lam quiz |
+| attempt_answers | Cau tra loi cua user |
+| chat_sessions | Phien chat |
+| chat_messages | Tin nhan chat |
+| notes | Ghi chu ca nhan |
+| bookmarks | Bookmark |
+| ai_generations | Lich su AI generation |
+| refresh_tokens | Token lam moi |
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       ADMIN USER MANAGEMENT                                  │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-Admin                   Frontend                 Backend                 Database
-  │                         │                        │                       │
-  │  1. Open Admin Panel    │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  2. GET /api/users    │                       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  3. Check admin role │
-  │                         │                        │                       │
-  │                         │  4. Return users list  │                       │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  5. Display users table │                        │                       │
-  │  - Name, Email, Role    │                        │                       │
-  │  - Status, Created      │                        │                       │
-  │  - Actions              │                        │                       │
-  │ ◀────────────────────── │                        │                       │
-  │                         │                        │                       │
-  │  6. Click "Edit User"   │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  7. PUT /api/users/:id │                       │
-  │                         │  { role, is_active }   │                       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  8. Update user      │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │                        │  9. Log action       │
-  │                         │                        │  (activity_logs)     │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  10. Return updated user                       │
-  │                         │ ◀─────────────────────│                       │
-```
+**Total: 16 Tables**
 
 ---
 
-## 11. NOTE & BOOKMARK FLOW
-
-### 11.1 Note Taking Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        NOTE TAKING FLOW                                       │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-User                    Frontend                 Backend                 Database
-  │                         │                        │                       │
-  │  1. While watching video│                        │                       │
-  │  - Type note            │                        │                       │
-  │  - Timestamp auto-captured│                      │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  2. POST /api/lessons/:id/notes                 │
-  │                         │  { content, timestamp_seconds }                 │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  3. Create note      │
-  │                         │                        │  - user_id (from JWT)│
-  │                         │                        │  - lesson_id         │
-  │                         │                        │  - content           │
-  │                         │                        │  - timestamp_seconds │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  4. Return created note                        │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  5. Add to notes list   │                        │                       │
-  │  (sidebar panel)        │                        │                       │
-  │ ◀────────────────────── │                        │                       │
-```
-
-### 11.2 Bookmark Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         BOOKMARK FLOW                                         │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-User                    Frontend                 Backend                 Database
-  │                         │                        │                       │
-  │  1. Click bookmark icon │                        │                       │
-  │  (on lesson)            │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  2. POST /api/lessons/:id/bookmark               │
-  │                         │  { note: "Important" } │                       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  3. Create bookmark  │
-  │                         │                        │  - user_id           │
-  │                         │                        │  - lesson_id         │
-  │                         │                        │  - note              │
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  4. Return success     │                       │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  5. Update UI           │                        │                       │
-  │  (icon filled)          │                        │                       │
-  │ ◀────────────────────── │                        │                       │
-  │                         │                        │                       │
-  │  6. View Bookmarks page │                        │                       │
-  │ ──────────────────────▶ │                        │                       │
-  │                         │                        │                       │
-  │                         │  7. GET /api/bookmarks │                       │
-  │                         │ ──────────────────────▶│                       │
-  │                         │                        │                       │
-  │                         │                        │  8. Get user bookmarks
-  │                         │                        │ ─────────────────────▶│
-  │                         │                        │                       │
-  │                         │  9. Return bookmarks list                      │
-  │                         │ ◀─────────────────────│                       │
-  │                         │                        │                       │
-  │  10. Display bookmarks  │                        │                       │
-  │  - Lesson title         │                        │                       │
-  │  - Course name          │                        │                       │
-  │  - Note                 │                        │                       │
-  │  - Created date         │                        │                       │
-  │ ◀────────────────────── │                        │                       │
-```
-
----
-
-## 📊 FLOW SUMMARY TABLE
-
-| Flow | Main Actors | Key Tables | External Services |
-|------|-------------|------------|-------------------|
-| Auth | User, Backend | users | - |
-| Course | User, Backend | courses, enrollments | File Storage |
-| Lesson | User, Backend | lessons, user_progress | - |
-| Quiz | User, Backend | quizzes, questions, answers, quiz_attempts | - |
-| Exercise | User, Backend, AI | exercises, exercise_submissions | Claude API |
-| Flashcard | User, Backend | flashcards, flashcard_reviews | - |
-| AI Chat | User, Backend, AI | conversations, messages | Claude API |
-| AI Services | User, Backend, AI | ai_quiz_generations, ai_summaries | Claude API |
-| Progress | User, Backend | user_progress, enrollments, quiz_attempts | - |
-| Admin | Admin, Backend | users, categories, courses | - |
-| Note | User, Backend | notes | - |
-| Bookmark | User, Backend | bookmarks | - |
-
----
-
-*Tài liệu này mô tả chi tiết các luồng nghiệp vụ trong hệ thống.*
-*Version: 3.0 - 11 Flows, Full Detail*
+*Version: 4.0 - Updated: 2026-03-01*
+*Document-RAG Architecture*
+*Tech Stack: Python 3.12, FastAPI, PostgreSQL 16, Redis, Claude API, LangChain, ChromaDB*
