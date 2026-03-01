@@ -10,11 +10,11 @@
 |------|-------|
 | [00-MASTER-OVERVIEW.md](./00-MASTER-OVERVIEW.md) | Tổng quan dự án (file này) |
 | [01-BUSINESS-MODEL.md](./01-BUSINESS-MODEL.md) | Business Model & User Personas |
-| [02-DATABASE-DESIGN.md](./02-DATABASE-DESIGN.md) | Database Schema + JSON Structures |
+| [02-DATABASE-DESIGN.md](./02-DATABASE-DESIGN.md) | Database Schema - 21 Tables |
 | [03-CODE-STRUCTURE.md](./03-CODE-STRUCTURE.md) | Code Structure & Patterns |
-| [04-API-DESIGN.md](./04-API-DESIGN.md) | REST API Endpoints |
+| [04-API-DESIGN.md](./04-API-DESIGN.md) | REST API - 75 Endpoints |
 | [05-AUTH-DESIGN.md](./05-AUTH-DESIGN.md) | Authentication |
-| [06-AI-CHAT-FLOW.md](./06-AI-CHAT-FLOW.md) | Luồng tích hợp AI Chat |
+| [06-AI-SERVICES-FLOW.md](./06-AI-SERVICES-FLOW.md) | Luồng tích hợp AI Services |
 | [07-SECURITY.md](./07-SECURITY.md) | Security & Access Control |
 
 ---
@@ -76,28 +76,34 @@
 
 ## 👥 User Model
 
-### Single Role: User
+### Two Roles: Admin + User
 
-Hệ thống chỉ có **1 role duy nhất** là `user`. Mọi user đều có quyền như nhau.
+Hệ thống có **2 roles**: `admin` và `user` (mặc định).
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                     USER PERMISSIONS                            │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  ✅ Tất cả users có quyền như nhau:                             │
+│  ✅ USER (mặc định):                                            │
 │  ├── Xem và tạo khóa học                                        │
-│  ├── Xem và tạo bài học                                         │
-│  ├── Xem và tạo quiz                                            │
-│  ├── Làm quiz và xem kết quả                                    │
+│  ├── Xem và tạo bài học (trong course do mình tạo)              │
+│  ├── Xem và tạo quiz (trong course do mình tạo)                 │
+│  ├── Làm quiz và xem kết quả (nếu enrolled)                     │
 │  ├── Chat với AI                                                │
-│  ├── Xem tiến độ học tập                                        │
+│  ├── Xem tiến độ học tập của mình                               │
 │  └── Upload tài liệu                                            │
 │                                                                 │
-│  ✅ Ownership-based access:                                     │
-│  └── Chỉ sửa/xóa resource do mình tạo                           │
+│  ✅ ADMIN (toàn quyền):                                         │
+│  ├── Tất cả quyền của User                                      │
+│  ├── Quản lý tất cả users (CRUD)                                │
+│  ├── Quản lý tất cả courses                                     │
+│  ├── Quản lý categories                                         │
+│  └── Xem tất cả progress                                        │
 │                                                                 │
-│  ❌ KHÔNG CÓ ROLE-BASED ACCESS                                  │
+│  ✅ Ownership-based access:                                     │
+│  └── User chỉ sửa/xóa resource do mình tạo                      │
+│  └── Admin có thể sửa/xóa tất cả                                │
 │  ❌ KHÔNG CÓ THANH TOÁN / PHÍ                                   │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -109,20 +115,37 @@ Hệ thống chỉ có **1 role duy nhất** là `user`. Mọi user đều có q
 
 ### Learning Flow
 ```
-Đăng ký → Xem danh sách khóa học → Học bài →
-Làm quiz → Chat với AI → Xem tiến độ
+Đăng ký → Xem danh sách khóa học → Đăng ký khóa → Học bài →
+Làm bài tập → Nộp bài → AI feedback → Làm Quiz → Review Flashcard →
+Chat với AI → Xem tiến độ
 ```
 
 ### Creating Flow
 ```
-Tạo khóa học → Thêm bài học → Tạo quiz →
-Upload tài liệu → Xem progress
+Tạo khóa học → Thêm bài học → Tạo flashcard → Tạo bài tập →
+Tạo quiz → Upload tài liệu → Xem progress học viên
 ```
 
-### AI Chat Flow
+### AI Services Flow
 ```
 Chọn khóa → Mở chat → Gửi câu hỏi → AI phản hồi (context: khóa học) →
 Lưu lịch sử
+
+Hoặc:
+Xem bài học → AI tóm tắt → AI tạo quiz → AI tạo flashcard →
+Học flashcard (SRS)
+```
+
+### Spaced Repetition Flow (Flashcard)
+```
+Xem flashcard cần review → Review (đánh giá 0-5) → SM-2 algorithm →
+Tính next_review_at → Hiển thị card tiếp theo
+```
+
+### Exercise Submission Flow
+```
+Làm bài tập → Nộp bài → AI chấm điểm → Feedback →
+Có thể nộp lại (nếu allowed)
 ```
 
 ---
@@ -166,4 +189,5 @@ Lưu lịch sử
 ---
 
 *Tài liệu được tạo ngày: 2026-02-27*
-*Version: 1.1 - Single role, no payment*
+*Cập nhật: 2026-03-01*
+*Version: 3.0 - 21 Tables, 75 APIs, Flashcards, Exercises, Notes, Bookmarks, AI Services*

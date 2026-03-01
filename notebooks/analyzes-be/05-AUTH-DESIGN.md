@@ -23,7 +23,7 @@
 │  {                                                              │
 │    "sub": "user_id",                                            │
 │    "email": "user@example.com",                                 │
-│    "role": "student",                                           │
+│    "role": "user",                                              │
 │    "exp": 1709047200,                                           │
 │    "iat": 1709045400                                            │
 │  }                                                              │
@@ -33,6 +33,8 @@
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+> **Lưu ý**: JWT payload có field `role` (`admin` hoặc `user`).
 
 ### Token Types
 
@@ -82,60 +84,86 @@
 
 ---
 
-## 👥 Authorization
+## 👥 Authorization (2 Roles: Admin + User)
+
+> **Two Role System**: Có 2 roles: `admin` và `user` (mặc định).
+> - **User**: Tạo khóa học, học tập, chat AI, quản lý resource do mình tạo
+> - **Admin**: Toàn quyền quản lý users, courses, categories
 
 ### Roles
 
 | Role | Code | Description |
 |------|------|-------------|
-| Student | `student` | Học viên |
-| Teacher | `teacher` | Giáo viên |
+| User | `user` | Người dùng thông thường (mặc định) |
 | Admin | `admin` | Quản trị viên |
-
-### Role Hierarchy
-
-```
-admin > teacher > student
-```
 
 ### Permission Matrix
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         PERMISSION MATRIX                                    │
+│                    PERMISSION MATRIX (2 ROLES)                               │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-                          STUDENT    TEACHER    ADMIN
-─────────────────────────────────────────────────────────
-VIEW_COURSES                 ✅         ✅         ✅
-CREATE_COURSE                ❌         ✅         ✅
-UPDATE_COURSE                ❌       Owner       ✅
-DELETE_COURSE                ❌       Owner       ✅
-─────────────────────────────────────────────────────────
-VIEW_LESSONS                 ✅         ✅         ✅
-CREATE_LESSON                ❌       Owner       ✅
-UPDATE_LESSON                ❌       Owner       ✅
-DELETE_LESSON                ❌       Owner       ✅
-─────────────────────────────────────────────────────────
-VIEW_QUIZ                    ✅         ✅         ✅
-CREATE_QUIZ                  ❌       Owner       ✅
-SUBMIT_QUIZ                  ✅         ✅         ✅
-─────────────────────────────────────────────────────────
-CHAT_WITH_AI                 ✅         ✅         ✅
-VIEW_OWN_PROGRESS            ✅         ✅         ✅
-VIEW_STUDENT_PROGRESS        ❌         ✅         ✅
-─────────────────────────────────────────────────────────
-MANAGE_USERS                 ❌         ❌         ✅
-VIEW_ALL_DATA                ❌         ❌         ✅
-SYSTEM_CONFIG                ❌         ❌         ✅
+RESOURCE                    PUBLIC    USER            ADMIN
+─────────────────────────────────────────────────────────────
+View courses                  ✅        ✅              ✅
+Create course                 -         ✅              ✅
+Update course                 -         Owner           ✅
+Delete course                 -         Owner           ✅
+─────────────────────────────────────────────────────────────
+View lessons                  ✅        ✅              ✅
+Create lesson                 -         Owner           ✅
+Update lesson                 -         Owner           ✅
+Delete lesson                 -         Owner           ✅
+─────────────────────────────────────────────────────────────
+View quiz                     -         ✅ (enrolled)   ✅
+Create quiz                   -         Owner           ✅
+Submit quiz                   -         Enrolled        ✅
+─────────────────────────────────────────────────────────────
+Chat with AI                  -         ✅              ✅
+View own progress             -         ✅              ✅
+View all progress             -         -               ✅
+─────────────────────────────────────────────────────────────
+List all users                -         -               ✅
+View user detail              -         -               ✅
+Update user                   -         Self            ✅
+Delete user                   -         -               ✅
+─────────────────────────────────────────────────────────────
+Manage categories             -         -               ✅
+System config                 -         -               ✅
 ```
 
-### Owner Check
+### Owner Check Implementation
 
 ```python
-# Course ownership
-if course.teacher_id != current_user.id and current_user.role != "admin":
+# Course ownership (User can only edit their own, Admin can edit all)
+if current_user.role != "admin" and course.creator_id != current_user.id:
     raise HTTPException(status_code=403, detail="Not authorized")
+
+# Lesson ownership (through course)
+if current_user.role != "admin" and lesson.course.creator_id != current_user.id:
+    raise HTTPException(status_code=403, detail="Not authorized")
+
+# User self check (User can only update self, Admin can update all)
+if current_user.role != "admin" and user.id != current_user.id:
+    raise HTTPException(status_code=403, detail="Not authorized")
+```
+
+### Admin Check
+
+```python
+# Admin only endpoints
+if current_user.role != "admin":
+    raise HTTPException(status_code=403, detail="Admin only")
+```
+
+### Enrollment Check
+
+```python
+# User must be enrolled to access lesson content/quiz
+enrollment = await get_enrollment(user_id=current_user.id, course_id=course.id)
+if not enrollment and current_user.role != "admin":
+    raise HTTPException(status_code=403, detail="Not enrolled in this course")
 ```
 
 ---
@@ -250,10 +278,26 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Invalid token")
     return await get_user(payload["sub"])
 
-async def require_role(roles: list[str], user = Depends(get_current_user)):
-    if user.role not in roles:
+async def require_admin(current_user = Depends(get_current_user)):
+    """Require admin role"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    return current_user
+
+async def require_owner_or_admin(resource_owner_id: int, current_user = Depends(get_current_user)):
+    """Check if current user owns the resource or is admin"""
+    if current_user.role != "admin" and resource_owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
-    return user
+    return current_user
+
+async def require_enrolled_or_admin(course_id: int, current_user = Depends(get_current_user)):
+    """Check if user is enrolled in course or is admin"""
+    if current_user.role == "admin":
+        return current_user
+    enrollment = await enrollment_service.get(current_user.id, course_id)
+    if not enrollment:
+        raise HTTPException(status_code=403, detail="Not enrolled in this course")
+    return current_user
 ```
 
 ### Usage Examples
@@ -264,14 +308,28 @@ async def require_role(roles: list[str], user = Depends(get_current_user)):
 async def list_courses(user = Depends(get_current_user)):
     ...
 
-# Teacher only
+# Any authenticated user can create
 @router.post("/courses")
-async def create_course(user = Depends(require_role(["teacher", "admin"]))):
+async def create_course(user = Depends(get_current_user)):
+    ...
+
+# Owner or Admin only
+@router.put("/courses/{id}")
+async def update_course(id: int, user = Depends(get_current_user)):
+    course = await course_service.get(id)
+    await require_owner_or_admin(course.creator_id, user)
     ...
 
 # Admin only
-@router.delete("/users/{id}")
-async def delete_user(user = Depends(require_role(["admin"]))):
+@router.get("/users")
+async def list_users(user = Depends(require_admin)):
+    ...
+
+# Enrolled users or Admin
+@router.post("/quizzes/{id}/submit")
+async def submit_quiz(id: int, user = Depends(get_current_user)):
+    quiz = await quiz_service.get(id)
+    await require_enrolled_or_admin(quiz.lesson.course_id, user)
     ...
 ```
 

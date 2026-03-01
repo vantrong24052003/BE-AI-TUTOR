@@ -1,6 +1,8 @@
 # BE AI TUTOR - Code Structure
 
 > Chi tiết cấu trúc code Backend FastAPI
+>
+> **Version**: 3.0 - 75 APIs, 21 Tables
 
 ---
 
@@ -13,69 +15,127 @@ BE-AI-TUTOR/
 │   ├── __init__.py
 │   ├── main.py                    # FastAPI app entry point
 │   │
-│   ├── controllers/               # HTTP handlers (5 methods RESTful)
+│   ├── controllers/               # HTTP handlers (15 controllers)
 │   │   ├── __init__.py
-│   │   ├── auth_controller.py     # Auth (special - login/register)
-│   │   ├── user_controller.py     # User CRUD
-│   │   ├── course_controller.py   # Course CRUD
-│   │   ├── lesson_controller.py   # Lesson CRUD
-│   │   ├── quiz_controller.py     # Quiz CRUD
-│   │   ├── chat_controller.py     # Chat (special - messages)
-│   │   ├── progress_controller.py # Progress (special - tracking)
-│   │   └── document_controller.py # Document CRUD
+│   │   ├── auth_controller.py     # 8 endpoints
+│   │   ├── user_controller.py     # 4 endpoints
+│   │   ├── category_controller.py # 4 endpoints
+│   │   ├── course_controller.py   # 6 endpoints
+│   │   ├── lesson_controller.py   # 5 endpoints
+│   │   ├── quiz_controller.py     # 7 endpoints
+│   │   ├── exercise_controller.py # 8 endpoints
+│   │   ├── flashcard_controller.py # 7 endpoints
+│   │   ├── note_controller.py     # 4 endpoints
+│   │   ├── bookmark_controller.py # 3 endpoints
+│   │   ├── chat_ai_controller.py  # 6 endpoints
+│   │   ├── ai_service_controller.py # 5 endpoints
+│   │   ├── learning_progress_controller.py # 3 endpoints
+│   │   ├── document_controller.py # 4 endpoints
+│   │   └── admin_controller.py    # 1 endpoint
 │   │
-│   ├── services/                  # Business logic layer
+│   ├── services/                  # Business logic layer (15 services)
 │   │   ├── __init__.py
 │   │   ├── auth_service.py
 │   │   ├── user_service.py
+│   │   ├── category_service.py
 │   │   ├── course_service.py
 │   │   ├── lesson_service.py
 │   │   ├── quiz_service.py
-│   │   ├── chat_service.py
-│   │   ├── progress_service.py
-│   │   └── document_service.py
+│   │   ├── exercise_service.py
+│   │   ├── flashcard_service.py
+│   │   ├── note_service.py
+│   │   ├── bookmark_service.py
+│   │   ├── chat_ai_service.py
+│   │   ├── ai_service.py          # AI integration (Claude/OpenAI)
+│   │   ├── learning_progress_service.py
+│   │   ├── document_service.py
+│   │   └── admin_service.py
 │   │
 │   ├── repositories/              # Data access layer
 │   │   ├── __init__.py
 │   │   ├── base_repository.py
 │   │   ├── user_repository.py
+│   │   ├── category_repository.py
 │   │   ├── course_repository.py
 │   │   ├── lesson_repository.py
 │   │   ├── quiz_repository.py
-│   │   ├── chat_repository.py
-│   │   └── progress_repository.py
+│   │   ├── exercise_repository.py
+│   │   ├── flashcard_repository.py
+│   │   ├── note_repository.py
+│   │   ├── bookmark_repository.py
+│   │   ├── conversation_repository.py
+│   │   ├── message_repository.py
+│   │   └── learning_progress_repository.py
 │   │
-│   ├── models/                    # SQLAlchemy ORM models
+│   ├── models/                    # SQLAlchemy ORM models (21 models)
 │   │   ├── __init__.py
 │   │   ├── base.py
 │   │   ├── user.py
+│   │   ├── category.py
 │   │   ├── course.py
 │   │   ├── lesson.py
+│   │   ├── enrollment.py
 │   │   ├── quiz.py
-│   │   ├── chat.py
-│   │   └── progress.py
+│   │   ├── question.py
+│   │   ├── answer.py
+│   │   ├── quiz_attempt.py
+│   │   ├── exercise.py
+│   │   ├── exercise_submission.py
+│   │   ├── flashcard.py
+│   │   ├── flashcard_review.py
+│   │   ├── note.py
+│   │   ├── bookmark.py
+│   │   ├── conversation.py
+│   │   ├── message.py
+│   │   ├── document.py
+│   │   ├── user_progress.py
+│   │   ├── ai_quiz_generation.py
+│   │   └── ai_summary.py
 │   │
 │   ├── schemas/                   # Pydantic schemas
 │   │   ├── __init__.py
+│   │   ├── common.py              # Pagination, etc.
 │   │   ├── user.py
+│   │   ├── auth.py
+│   │   ├── category.py
 │   │   ├── course.py
 │   │   ├── lesson.py
 │   │   ├── quiz.py
+│   │   ├── exercise.py
+│   │   ├── flashcard.py
+│   │   ├── note.py
+│   │   ├── bookmark.py
 │   │   ├── chat.py
-│   │   ├── progress.py
-│   │   └── common.py
+│   │   ├── ai_service.py
+│   │   ├── learning_progress.py
+│   │   └── document.py
 │   │
 │   └── core/
 │       ├── __init__.py
-│       ├── config.py
-│       ├── database.py
-│       ├── security.py
-│       ├── exceptions.py
-│       └── dependencies.py
+│       ├── config.py              # Settings
+│       ├── database.py            # Async DB setup
+│       ├── security.py            # JWT, password hashing
+│       ├── exceptions.py          # Custom exceptions
+│       ├── dependencies.py        # FastAPI dependencies
+│       └── cache.py               # Redis setup
 │
 ├── tests/
+│   ├── __init__.py
+│   ├── conftest.py
+│   ├── test_auth.py
+│   ├── test_courses.py
+│   ├── test_lessons.py
+│   ├── test_quizzes.py
+│   ├── test_exercises.py
+│   ├── test_flashcards.py
+│   ├── test_chat.py
+│   └── test_ai_services.py
+│
 ├── alembic/
-├── notebooks/
+│   ├── versions/
+│   └── env.py
+│
+├── notebooks/analyzes-be/         # Spec files
 ├── .claude/
 ├── .agent/
 │
@@ -91,22 +151,25 @@ BE-AI-TUTOR/
 
 ---
 
-## 📝 RESTful Controller Pattern
+## 📋 Controllers Summary (75 Endpoints)
 
-### Mỗi Controller chỉ có 5 methods chuẩn
-
-```python
-# src/controllers/[name]_controller.py
-from fastapi import APIRouter
-
-router = APIRouter(prefix="/api/[resource]", tags=["[Resource]"])
-
-@router.get("")           # INDEX  - List all
-@router.get("/{id}")      # SHOW   - Get one
-@router.post("")          # CREATE - Create new
-@router.put("/{id}")      # UPDATE - Update full
-@router.delete("/{id}")   # DELETE - Delete
-```
+| # | Controller | Endpoints | Mô tả |
+|---|------------|-----------|-------|
+| 1 | auth_controller.py | 8 | Register, Login, Logout, Refresh, Me, Change Password, Forgot/Reset |
+| 2 | category_controller.py | 4 | CRUD categories (Admin) |
+| 3 | user_controller.py | 4 | CRUD users |
+| 4 | course_controller.py | 6 | CRUD + Enroll |
+| 5 | lesson_controller.py | 5 | CRUD lessons |
+| 6 | quiz_controller.py | 7 | CRUD + Submit + Attempts |
+| 7 | exercise_controller.py | 8 | CRUD + Submit + Submissions |
+| 8 | flashcard_controller.py | 7 | CRUD + Review + Progress |
+| 9 | note_controller.py | 4 | CRUD notes |
+| 10 | bookmark_controller.py | 3 | List + Create + Delete |
+| 11 | chat_ai_controller.py | 6 | Conversations + Messages |
+| 12 | ai_service_controller.py | 5 | Generate Quiz, Summarize, Solve, Grade, Generate Flashcards |
+| 13 | learning_progress_controller.py | 3 | Overview + Course Progress + Complete |
+| 14 | document_controller.py | 4 | CRUD documents |
+| 15 | admin_controller.py | 1 | Statistics |
 
 ---
 
@@ -137,23 +200,17 @@ router = APIRouter(prefix="/api/courses", tags=["Courses"])
 async def index(
     page: int = 1,
     size: int = 10,
-    category: str | None = None,
+    category_id: int | None = None,
+    level: str | None = None,
     search: str | None = None,
     service: CourseService = Depends()
 ):
-    """
-    Lấy danh sách khóa học với phân trang
-
-    Query params:
-    - page: Số trang (default: 1)
-    - size: Số item/trang (default: 10)
-    - category: Lọc theo danh mục
-    - search: Tìm kiếm theo tên
-    """
+    """Lấy danh sách khóa học với phân trang"""
     return await service.get_all(
         page=page,
         size=size,
-        category=category,
+        category_id=category_id,
+        level=level,
         search=search
     )
 
@@ -162,41 +219,22 @@ async def index(
 @router.get("/{course_id}", response_model=CourseResponse)
 async def show(
     course_id: int,
+    current_user: Annotated[User | None, Depends(get_current_user_optional)] = None,
     service: CourseService = Depends()
 ):
-    """
-    Lấy chi tiết khóa học theo ID
-
-    Path params:
-    - course_id: ID của khóa học
-    """
-    course = await service.get_by_id(course_id)
-    if not course:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found"
-        )
-    return course
+    """Lấy chi tiết khóa học"""
+    return await service.get_by_id(course_id, user=current_user)
 
 
 # ============ CREATE - Create new course ============
 @router.post("", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)
 async def create(
     data: CourseCreate,
-    current_user: Annotated[User, Depends(require_role(["teacher", "admin"]))],
+    current_user: Annotated[User, Depends(get_current_user)],
     service: CourseService = Depends()
 ):
-    """
-    Tạo khóa học mới (Teacher+)
-
-    Body:
-    - title: Tên khóa học (required)
-    - description: Mô tả
-    - category: Danh mục
-    - level: Cấp độ (beginner/intermediate/advanced)
-    - thumbnail: URL hình ảnh
-    """
-    return await service.create(data, teacher_id=current_user.id)
+    """Tạo khóa học mới (any authenticated user)"""
+    return await service.create(data, creator_id=current_user.id)
 
 
 # ============ UPDATE - Update course ============
@@ -207,14 +245,7 @@ async def update(
     current_user: Annotated[User, Depends(get_current_user)],
     service: CourseService = Depends()
 ):
-    """
-    Cập nhật khóa học (Owner/Admin)
-
-    Path params:
-    - course_id: ID của khóa học
-
-    Body: Các trường cần cập nhật
-    """
+    """Cập nhật khóa học (Owner/Admin)"""
     return await service.update(course_id, data, user=current_user)
 
 
@@ -225,13 +256,20 @@ async def destroy(
     current_user: Annotated[User, Depends(get_current_user)],
     service: CourseService = Depends()
 ):
-    """
-    Xóa khóa học (Owner/Admin)
-
-    Path params:
-    - course_id: ID của khóa học
-    """
+    """Xóa khóa học (Owner/Admin)"""
     await service.delete(course_id, user=current_user)
+
+
+# ============ ENROLL - Enroll in course ============
+@router.post("/{course_id}/enroll", status_code=status.HTTP_200_OK)
+async def enroll(
+    course_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    service: CourseService = Depends()
+):
+    """Đăng ký khóa học"""
+    await service.enroll(course_id, user_id=current_user.id)
+    return {"message": "Enrolled successfully"}
 ```
 
 ---
@@ -244,27 +282,38 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException, status
 
 from src.repositories.course_repository import CourseRepository
+from src.repositories.enrollment_repository import EnrollmentRepository
 from src.schemas.course import CourseCreate, CourseUpdate
 from src.core.database import get_db
 from src.models.user import User
 
 class CourseService:
-    def __init__(self, db: AsyncSession = Depends(get_db)):
-        self.repository = CourseRepository(db)
+    def __init__(
+        self,
+        db: AsyncSession = Depends(get_db),
+        course_repo: CourseRepository = Depends(),
+        enrollment_repo: EnrollmentRepository = Depends()
+    ):
+        self.db = db
+        self.course_repo = course_repo
+        self.enrollment_repo = enrollment_repo
 
     async def get_all(
         self,
         page: int,
         size: int,
-        category: str | None = None,
+        category_id: int | None = None,
+        level: str | None = None,
         search: str | None = None
     ) -> dict:
         """Lấy danh sách khóa học"""
-        courses, total = await self.repository.find_all(
+        courses, total = await self.course_repo.find_all(
             page=page,
             size=size,
-            category=category,
-            search=search
+            category_id=category_id,
+            level=level,
+            search=search,
+            is_published=True
         )
         return {
             "items": courses,
@@ -274,40 +323,68 @@ class CourseService:
             "pages": (total + size - 1) // size
         }
 
-    async def get_by_id(self, course_id: int):
+    async def get_by_id(self, course_id: int, user: User | None = None):
         """Lấy khóa học theo ID"""
-        return await self.repository.find_by_id(course_id)
+        course = await self.course_repo.find_by_id(course_id)
+        if not course:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Course not found")
 
-    async def create(self, data: CourseCreate, teacher_id: int):
+        # Add enrollment info if user is logged in
+        if user:
+            enrollment = await self.enrollment_repo.find_by_user_and_course(
+                user.id, course_id
+            )
+            course.is_enrolled = enrollment is not None
+            if enrollment:
+                course.progress = await self.course_repo.get_progress(course_id, user.id)
+
+        return course
+
+    async def create(self, data: CourseCreate, creator_id: int):
         """Tạo khóa học mới"""
-        return await self.repository.create({
+        return await self.course_repo.create({
             **data.model_dump(),
-            "teacher_id": teacher_id
+            "creator_id": creator_id
         })
 
     async def update(self, course_id: int, data: CourseUpdate, user: User):
         """Cập nhật khóa học"""
-        course = await self.repository.find_by_id(course_id)
+        course = await self.course_repo.find_by_id(course_id)
         if not course:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Course not found")
 
-        # Check permission
-        if course.teacher_id != user.id and user.role != "admin":
+        # Check permission (owner or admin)
+        if course.creator_id != user.id and user.role != "admin":
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Not authorized")
 
-        return await self.repository.update(course_id, data.model_dump(exclude_unset=True))
+        return await self.course_repo.update(course_id, data.model_dump(exclude_unset=True))
 
     async def delete(self, course_id: int, user: User):
         """Xóa khóa học"""
-        course = await self.repository.find_by_id(course_id)
+        course = await self.course_repo.find_by_id(course_id)
         if not course:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Course not found")
 
         # Check permission
-        if course.teacher_id != user.id and user.role != "admin":
+        if course.creator_id != user.id and user.role != "admin":
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Not authorized")
 
-        await self.repository.delete(course_id)
+        await self.course_repo.delete(course_id)
+
+    async def enroll(self, course_id: int, user_id: int):
+        """Đăng ký khóa học"""
+        course = await self.course_repo.find_by_id(course_id)
+        if not course:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Course not found")
+
+        existing = await self.enrollment_repo.find_by_user_and_course(user_id, course_id)
+        if existing:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Already enrolled")
+
+        await self.enrollment_repo.create({
+            "user_id": user_id,
+            "course_id": course_id
+        })
 ```
 
 ---
@@ -316,10 +393,13 @@ class CourseService:
 
 ```python
 # src/repositories/course_repository.py
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.models.course import Course
+from src.models.lesson import Lesson
+from src.models.enrollment import Enrollment
 
 class CourseRepository:
     def __init__(self, db: AsyncSession):
@@ -329,19 +409,29 @@ class CourseRepository:
         self,
         page: int,
         size: int,
-        category: str | None = None,
-        search: str | None = None
+        category_id: int | None = None,
+        level: str | None = None,
+        search: str | None = None,
+        is_published: bool | None = None,
+        creator_id: int | None = None
     ) -> tuple[list[Course], int]:
         """Tìm tất cả khóa học với filter"""
-        query = select(Course)
+        query = select(Course).options(
+            selectinload(Course.creator),
+            selectinload(Course.category)
+        )
 
-        # Filter by category
-        if category:
-            query = query.where(Course.category == category)
-
-        # Search by title
+        # Filters
+        if category_id:
+            query = query.where(Course.category_id == category_id)
+        if level:
+            query = query.where(Course.level == level)
         if search:
             query = query.where(Course.title.ilike(f"%{search}%"))
+        if is_published is not None:
+            query = query.where(Course.is_published == is_published)
+        if creator_id:
+            query = query.where(Course.creator_id == creator_id)
 
         # Count total
         count_query = select(func.count()).select_from(query.subquery())
@@ -349,13 +439,18 @@ class CourseRepository:
 
         # Paginate
         query = query.offset((page - 1) * size).limit(size)
+        query = query.order_by(Course.created_at.desc())
         result = await self.db.execute(query)
 
         return result.scalars().all(), total
 
     async def find_by_id(self, course_id: int) -> Course | None:
         """Tìm khóa học theo ID"""
-        query = select(Course).where(Course.id == course_id)
+        query = select(Course).where(Course.id == course_id).options(
+            selectinload(Course.creator),
+            selectinload(Course.category),
+            selectinload(Course.lessons)
+        )
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
@@ -382,6 +477,30 @@ class CourseRepository:
         course = await self.find_by_id(course_id)
         await self.db.delete(course)
         await self.db.commit()
+
+    async def get_progress(self, course_id: int, user_id: int) -> int:
+        """Tính tiến độ khóa học"""
+        # Count total lessons
+        total_query = select(func.count()).select_from(Lesson).where(
+            Lesson.course_id == course_id
+        )
+        total = await self.db.scalar(total_query) or 0
+
+        if total == 0:
+            return 0
+
+        # Count completed lessons
+        from src.models.user_progress import UserProgress
+        completed_query = select(func.count()).select_from(UserProgress).where(
+            UserProgress.user_id == user_id,
+            UserProgress.lesson_id.in_(
+                select(Lesson.id).where(Lesson.course_id == course_id)
+            ),
+            UserProgress.completed == True
+        )
+        completed = await self.db.scalar(completed_query) or 0
+
+        return int((completed / total) * 100)
 ```
 
 ---
@@ -394,39 +513,69 @@ from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import Optional
 
+# ============ Nested Schemas ============
+class CreatorBrief(BaseModel):
+    """Thông tin ngắn gọn của creator"""
+    id: int
+    name: str
+    avatar: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CategoryBrief(BaseModel):
+    """Thông tin ngắn gọn của category"""
+    id: int
+    name: str
+    slug: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # ============ Base Schema ============
 class CourseBase(BaseModel):
-    title: str = Field(..., min_length=1, max_length=255, description="Tên khóa học")
-    description: Optional[str] = Field(None, description="Mô tả khóa học")
-    category: Optional[str] = Field(None, max_length=100, description="Danh mục")
-    level: str = Field("beginner", description="Cấp độ: beginner/intermediate/advanced")
-    thumbnail: Optional[str] = Field(None, max_length=500, description="URL hình ảnh")
+    title: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    category_id: Optional[int] = None
+    level: str = Field("beginner", pattern="^(beginner|intermediate|advanced)$")
+    thumbnail: Optional[str] = Field(None, max_length=500)
+    duration_hours: int = Field(0, ge=0)
+
 
 # ============ Create Schema ============
 class CourseCreate(CourseBase):
     """Schema để tạo khóa học mới"""
     pass
 
+
 # ============ Update Schema ============
 class CourseUpdate(BaseModel):
-    """Schema để cập nhật khóa học (tất cả optional)"""
+    """Schema để cập nhật khóa học"""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
-    category: Optional[str] = Field(None, max_length=100)
-    level: Optional[str] = None
+    category_id: Optional[int] = None
+    level: Optional[str] = Field(None, pattern="^(beginner|intermediate|advanced)$")
     thumbnail: Optional[str] = Field(None, max_length=500)
+    duration_hours: Optional[int] = Field(None, ge=0)
     is_published: Optional[bool] = None
+
 
 # ============ Response Schema ============
 class CourseResponse(CourseBase):
     """Schema response cho 1 khóa học"""
     id: int
-    teacher_id: int
+    creator: CreatorBrief
+    category: Optional[CategoryBrief] = None
     is_published: bool
+    lessons_count: int = 0
+    enrolled_count: int = 0
+    is_enrolled: bool = False
+    progress: int = 0
     created_at: datetime
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 # ============ List Response Schema ============
 class CourseListResponse(BaseModel):
@@ -440,51 +589,187 @@ class CourseListResponse(BaseModel):
 
 ---
 
-## 🗃️ Model Pattern Example
+## 🤖 AI Service Pattern
 
 ```python
-# src/models/course.py
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+# src/services/ai_service.py
+from anthropic import Anthropic
+from openai import OpenAI
+from typing import AsyncGenerator
+import json
 
-from src.models.base import Base
+from src.core.config import settings
+from src.core.cache import redis_client
 
-class Course(Base):
-    __tablename__ = "courses"
+class AIService:
+    def __init__(self):
+        self.claude = Anthropic(api_key=settings.AI_API_KEY)
+        self.openai = OpenAI(api_key=settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
+        self.model = settings.AI_MODEL  # claude-3-sonnet or claude-3-haiku
 
-    # Primary Key
-    id = Column(Integer, primary_key=True, index=True)
+    async def chat(
+        self,
+        message: str,
+        conversation_history: list[dict],
+        system_prompt: str,
+        course_context: dict | None = None
+    ) -> str:
+        """Chat với AI"""
+        # Build messages
+        messages = conversation_history.copy()
+        messages.append({"role": "user", "content": message})
 
-    # Foreign Keys
-    teacher_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+        # Call Claude API
+        response = self.claude.messages.create(
+            model=self.model,
+            max_tokens=2048,
+            system=system_prompt,
+            messages=messages
+        )
 
-    # Columns
-    title = Column(String(255), nullable=False)
-    description = Column(Text)
-    thumbnail = Column(String(500))
-    category = Column(String(100))
-    level = Column(String(50), default="beginner")
-    duration_hours = Column(Integer, default=0)
-    is_published = Column(Boolean, default=False)
+        return response.content[0].text
 
-    # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    async def stream_chat(
+        self,
+        message: str,
+        conversation_history: list[dict],
+        system_prompt: str
+    ) -> AsyncGenerator[str, None]:
+        """Stream chat response"""
+        messages = conversation_history.copy()
+        messages.append({"role": "user", "content": message})
 
-    # Relationships
-    teacher = relationship("User", back_populates="courses")
-    lessons = relationship(
-        "Lesson",
-        back_populates="course",
-        cascade="all, delete-orphan",
-        order_by="Lesson.order"
-    )
-    enrollments = relationship("Enrollment", back_populates="course")
-    documents = relationship("Document", back_populates="course")
+        with self.claude.messages.stream(
+            model=self.model,
+            max_tokens=2048,
+            system=system_prompt,
+            messages=messages
+        ) as stream:
+            for text in stream.text_stream:
+                yield text
 
-    def __repr__(self):
-        return f"<Course {self.title}>"
+    async def generate_quiz(
+        self,
+        lesson_content: str,
+        num_questions: int = 5,
+        difficulty: str = "medium"
+    ) -> dict:
+        """AI tạo quiz từ nội dung bài học"""
+        prompt = f"""
+Nhiệm vụ: Tạo quiz từ nội dung bài học sau.
+
+NỘI DUNG BÀI HỌC:
+{lesson_content}
+
+YÊU CẦU:
+- Số câu hỏi: {num_questions}
+- Độ khó: {difficulty}
+- Loại câu hỏi: trắc nghiệm 1 đáp án
+- Mỗi câu có 4 lựa chọn (A, B, C, D)
+
+ĐỊNH DẠNG OUTPUT (JSON):
+{{
+  "questions": [
+    {{
+      "content": "Câu hỏi?",
+      "answers": [
+        {{"content": "Đáp án A", "is_correct": true}},
+        {{"content": "Đáp án B", "is_correct": false}},
+        {{"content": "Đáp án C", "is_correct": false}},
+        {{"content": "Đáp án D", "is_correct": false}}
+      ]
+    }}
+  ]
+}}
+"""
+        response = self.claude.messages.create(
+            model=self.model,
+            max_tokens=4096,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        # Parse JSON response
+        content = response.content[0].text
+        # Extract JSON from response
+        json_str = content[content.index("{"):content.rindex("}")+1]
+        return json.loads(json_str)
+
+    async def summarize(
+        self,
+        lesson_content: str,
+        length: str = "medium"
+    ) -> dict:
+        """AI tóm tắt nội dung"""
+        length_words = {"short": 100, "medium": 200, "long": 400}
+
+        prompt = f"""
+Nhiệm vụ: Tóm tắt nội dung bài học sau.
+
+NỘI DUNG:
+{lesson_content}
+
+YÊU CẦU:
+- Độ dài: {length_words.get(length, 200)} từ
+- Trình bày các ý chính thành bullet points
+- Giữ lại các từ khóa quan trọng
+
+ĐỊNH DẠNG OUTPUT (JSON):
+{{
+  "summary": "Tóm tắt ngắn gọn...",
+  "key_points": ["Điểm 1", "Điểm 2", "Điểm 3"],
+  "keywords": ["keyword1", "keyword2"]
+}}
+"""
+        response = self.claude.messages.create(
+            model=self.model,
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        content = response.content[0].text
+        json_str = content[content.index("{"):content.rindex("}")+1]
+        return json.loads(json_str)
+
+    async def grade_submission(
+        self,
+        exercise_description: str,
+        submission_answer: str,
+        grading_criteria: str,
+        max_score: int = 100
+    ) -> dict:
+        """AI chấm điểm bài nộp"""
+        prompt = f"""
+Nhiệm vụ: Chấm điểm bài nộp của học viên.
+
+BÀI TẬP:
+{exercise_description}
+
+TIÊU CHÍ CHẤM ĐIỂM:
+{grading_criteria}
+
+ĐIỂM TỐI ĐA: {max_score}
+
+BÀI NỘP CỦA HỌC VIÊN:
+{submission_answer}
+
+ĐỊNH DẠNG OUTPUT (JSON):
+{{
+  "score": 85,
+  "overall_comment": "Nhận xét chung...",
+  "strengths": ["Điểm tốt 1", "Điểm tốt 2"],
+  "improvements": ["Cần cải thiện 1", "Cần cải thiện 2"],
+  "suggestions": ["Gợi ý 1"]
+}}
+"""
+        response = self.claude.messages.create(
+            model=self.model,
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        content = response.content[0].text
+        json_str = content[content.index("{"):content.rindex("}")+1]
+        return json.loads(json_str)
 ```
 
 ---
@@ -505,3 +790,4 @@ class Course(Base):
 ---
 
 *Tài liệu này định nghĩa cấu trúc code cho hệ thống.*
+*Version: 3.0 - 75 APIs, 21 Tables, 15 Controllers, 15 Services*
