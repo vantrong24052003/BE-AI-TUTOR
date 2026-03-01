@@ -276,7 +276,7 @@ class TaskQueue:
 | [11-BOOKMARKS-SPEC.md](./11-BOOKMARKS-SPEC.md) | Bookmarks | 5 | ❌ | ❌ |
 | [12-ADMIN-SPEC.md](./12-ADMIN-SPEC.md) | Admin | 10 | ❌ | ❌ |
 
-**Total: 75 APIs**
+**Total: 77 APIs**
 
 ---
 

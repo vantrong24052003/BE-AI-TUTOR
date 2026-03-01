@@ -136,6 +136,69 @@ AI_TEMPERATURE = float(os.getenv("AI_TEMPERATURE", "0.7"))
 
 ---
 
+### 3.2.1 List AI Summaries
+
+**Endpoint**: `GET /api/v1/ai/summaries`
+
+**Headers**: `Authorization: Bearer <token>`
+
+**Query Parameters**:
+| Param | Type | Description |
+|-------|------|-------------|
+| lesson_id | int | Filter by lesson (optional) |
+| page | int | Page number (default: 1) |
+| limit | int | Items per page (default: 10) |
+
+**Success Response** (200):
+```json
+{
+  "summaries": [
+    {
+      "id": 1,
+      "lesson_id": 1,
+      "lesson": {
+        "id": 1,
+        "title": "Giới thiệu Python",
+        "course": {
+          "id": 1,
+          "title": "Python Basics"
+        }
+      },
+      "style": "bullet_points",
+      "preview": "• Python là ngôn ngữ lập trình bậc cao\n• Được tạo bởi Guido van Rossum...",
+      "created_at": "2026-03-01T10:00:00Z"
+    }
+  ],
+  "meta": {
+    "total": 5,
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+
+---
+
+### 3.2.2 Get AI Summary Detail
+
+**Endpoint**: `GET /api/v1/ai/summaries/:id`
+
+**Headers**: `Authorization: Bearer <token>`
+
+**Success Response** (200):
+```json
+{
+  "id": 1,
+  "lesson_id": 1,
+  "summary": "Full summary content...",
+  "style": "bullet_points",
+  "tokens_used": 450,
+  "created_at": "2026-03-01T10:00:00Z"
+}
+```
+
+---
+
 ### 3.3 Generate Flashcards
 
 **Endpoint**: `POST /api/v1/ai/generate-flashcards`
